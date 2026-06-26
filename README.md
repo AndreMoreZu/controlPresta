@@ -207,14 +207,78 @@ Al saldar, todo queda en cero.
 
 ## 7. Estado actual del proyecto
 
-- ✅ Proyecto Laravel **ya creado** localmente con Laragon en `C:\laragon\www\control-prestamos`.
-- ✅ Laravel corre con `php artisan serve`.
+- ✅ Proyecto Laravel creado localmente con Laragon en `C:\laragon\www\control-prestamos`.
+- ✅ Subido a GitHub: `github.com/AndreMoreZu/controlPresta`.
+- ✅ Base de datos MySQL `controlpresta` creada y conectada en `.env`.
+- ✅ Migraciones creadas y corridas: `users`, `clientes`, `prestamos`, `pagos`, `intereses_atrasados`.
 - ✅ Prototipo visual final terminado (`index.html`) — define diseño y lógica.
-- ⏳ Pendiente: subir a GitHub, crear migraciones, modelos, controladores, vistas Blade, login, PWA.
+- ⏳ Pendiente: modelos Eloquent + relaciones, login, controladores, vistas Blade (Bootstrap 5), PWA.
 
 ---
 
-## 8. Migración de clientes existentes (TODO A MANO)
+## 8. Estándares de código (OBLIGATORIO seguirlos)
+
+Todo el código debe ser ordenado, modular y consistente. Mismo estilo en todo el proyecto. Estas reglas son obligatorias:
+
+**Arquitectura MVC + servicios**
+- **Controladores delgados:** solo reciben la petición, llaman a la lógica y devuelven la vista/respuesta. NADA de cálculos de negocio dentro del controlador.
+- **Lógica de negocio en su lugar:** los cálculos (interés, multa, saldo, recálculo a la mitad, total a saldar, etc.) van en **clases de servicio** dedicadas (carpeta `app/Services`, ej. `PrestamoService`, `PagoService`) o en métodos del modelo. NUNCA repetir lógica en varios lados (principio DRY: una sola fuente de verdad por cada regla).
+- **Modelos Eloquent:** con sus relaciones bien definidas, `$fillable`, y `casts` correctos. Los montos son enteros.
+- **Validación con Form Requests:** cada formulario valida con su clase `FormRequest` (ej. `StoreClienteRequest`), no validaciones sueltas en el controlador.
+
+**Organización y nombres**
+- Nombres de variables, métodos y comentarios en **español** (coherente con el negocio: `cliente`, `prestamo`, `saldo`, `interesPeriodo`).
+- Clases en PascalCase (`PrestamoController`), métodos en camelCase (`registrarPago`), tablas/columnas en snake_case (`intereses_atrasados`).
+- Una responsabilidad por clase/método. Métodos cortos y claros.
+- Rutas con nombre (`->name('clientes.index')`) y agrupadas con `Route::resource` donde aplique.
+
+**Vistas (Blade + Bootstrap 5)**
+- **Bootstrap 5** para todos los estilos (calza con el prototipo `index.html`: verde `#0E8C4F`, `#075E54`, beige `#ECE5DD`).
+- Vistas modulares: un **layout base** (`layouts.app`) y **componentes Blade** reutilizables (tarjetas de cliente, paneles, modales, botones). Nada de copiar y pegar HTML repetido.
+- La lógica NO va en las vistas; las vistas solo muestran datos ya preparados por el controlador/servicio.
+
+**Reglas de negocio centralizadas**
+- Las constantes del negocio (tasas 20/15/5, tarifas de multa 2000/3000/5000, umbrales) se definen UNA vez (config o constantes de clase), no se escriben "a mano" repetidas por el código.
+- Los montos SIEMPRE enteros (ver sección 3). Redondear con `round()`/`intval()` antes de guardar.
+
+**Antes de cada avance**
+- Código limpio, sin archivos basura ni código comentado muerto.
+- Commits de Git pequeños y con mensaje claro por cada funcionalidad terminada.
+
+---
+
+## 9. Guía de estilo y colores (tema WhatsApp)
+
+> El diseño debe verse **idéntico al prototipo** `_prototipo/index.html`. Leé ese archivo para los estilos, espaciados y formas exactas. Estos son los colores y reglas base:
+
+**Paleta de colores (CSS variables):**
+```css
+--green:#075E54;        /* verde oscuro: header, sidebar, barras superiores */
+--green-dark:#054640;   /* verde muy oscuro: acentos */
+--accent:#0E8C4F;       /* verde principal: botones, acciones (NO el verde chillón) */
+--accent-dark:#0A6E3D;  /* hover de botones */
+--beige:#ECE5DD;        /* fondo general */
+--white:#FFFFFF;        /* tarjetas, paneles */
+--text:#111B21;         /* texto principal */
+--muted:#8696a0;        /* texto secundario / etiquetas */
+--line:#E9E3DA;         /* bordes suaves */
+--red:#D9534F;          /* atrasos, multas, vencidos */
+--avatar:#D7E7DE;       /* fondo de iniciales/avatares */
+```
+
+**Reglas de estilo:**
+- Botones de acción: fondo `--accent` (#0E8C4F) con texto **blanco**; hover a `--accent-dark`.
+- Header/sidebar/barras superiores: fondo `--green` (#075E54) con texto blanco.
+- Fondo de las pantallas: `--beige`. Tarjetas y paneles: blanco con bordes `--line` y esquinas redondeadas (~14px).
+- Estados: "Al día" en verde, "Atrasado"/multas/vencidos en `--red`.
+- Tipografía tipo sistema (system-ui / Segoe UI / Roboto), limpia y legible.
+- Bootstrap 5 como base, **personalizado con estos colores** (sobreescribir variables de Bootstrap o usar clases propias). El resultado debe verse como el prototipo, no como Bootstrap por defecto.
+- Símbolo de moneda: ₡ con separador de miles (ej. `₡150.000`).
+- Versión móvil instalable (PWA), con diseño responsive como el prototipo (vista escritorio + celular).
+
+---
+
+## 10. Migración de clientes existentes (TODO A MANO)
 
 Los datos están **en papel (cuaderno)**, así que se digitan **a mano, uno por uno**. No hay importación por Excel y **el sistema NO calcula nada en la migración**: cada número se ingresa tal como está en el cuaderno. De ahí en adelante, el sistema sí toma el control (pagos nuevos, historial, estados).
 
@@ -235,7 +299,7 @@ Y un **interruptor "¿Está atrasado?"** que, solo si se activa, pide a mano:
 
 ---
 
-## 9. Subir el proyecto a GitHub (paso a paso)
+## 11. Subir el proyecto a GitHub (paso a paso)
 
 Desde la **terminal de Laragon**, dentro de la carpeta del proyecto:
 
@@ -283,7 +347,7 @@ git push
 
 ---
 
-## 10. Cómo trabajar con Claude Code (VS Code)
+## 12. Cómo trabajar con Claude Code (VS Code)
 
 1. Abrí la carpeta `C:\laragon\www\control-prestamos` en VS Code.
 2. Dejá este `README.md` en la raíz → Claude Code lo lee como contexto.
@@ -307,7 +371,7 @@ php artisan serve                       # arranca el servidor local
 
 ---
 
-## 11. Acuerdo comercial (resumen)
+## 13. Acuerdo comercial (resumen)
 
 - **Desarrollo:** ₡150.000 (una sola vez). Incluye el sistema descrito en este README.
 - **Hosting + dominio:** se cobra aparte / anual (sube en la renovación).
