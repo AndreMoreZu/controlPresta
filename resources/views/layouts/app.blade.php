@@ -12,30 +12,22 @@
 </head>
 <body>
     <div class="d-flex">
-        <aside class="desk-side">
-            <div class="side-head">
-                <div class="logo">₡</div>
-                <div>
-                    <b>ControlPresta</b>
-                    <span>Panel interno</span>
-                </div>
-            </div>
-            <nav class="desk-nav">
-                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Panel</a>
-            </nav>
-            <div class="side-foot">
-                <div class="avd">{{ Str::upper(Str::substr(auth()->user()->name, 0, 1)) }}</div>
-                <div class="flex-grow-1">
-                    <b>{{ auth()->user()->name }}</b>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit">Cerrar sesión</button>
-                    </form>
-                </div>
-            </div>
+        <aside class="desk-side d-none d-md-flex">
+            @include('layouts.partials.sidebar-nav')
         </aside>
 
+        <div class="offcanvas offcanvas-start desk-side-offcanvas" tabindex="-1" id="sidebarOffcanvas">
+            <button type="button" class="btn-close btn-close-white offcanvas-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+            @include('layouts.partials.sidebar-nav')
+        </div>
+
         <div class="desk-main flex-grow-1">
+            <div class="mobile-topbar d-flex d-md-none">
+                <button type="button" class="mobile-menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Abrir menú">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+                <b>ControlPresta</b>
+            </div>
             <div class="desk-topbar">
                 {{ $header ?? '' }}
             </div>
