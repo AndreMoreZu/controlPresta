@@ -70,6 +70,9 @@
                         <div class="l">{{ $prestamo->dias_atraso }} días de atraso<b>Multa acumulada</b></div>
                         <div class="d">{{ colones($multa) }}</div>
                     </div>
+                    @if ($prestamo->atraso_desde)
+                        <div class="kv"><span class="k">Vencido desde</span><span class="v">{{ $prestamo->atraso_desde->format('d/m/Y') }}</span></div>
+                    @endif
                 </div>
             @endif
 
@@ -112,26 +115,28 @@
 
         <div class="panel">
             <h3>Documento de identidad</h3>
-            @if ($cliente->cedula_foto)
-                <div class="cedula">
-                    <img src="{{ asset('storage/'.$cliente->cedula_foto) }}" alt="cédula">
-                    <div class="cap">Foto de la cédula</div>
-                </div>
-            @else
-                <div class="cedula">
-                    <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="320" height="180" fill="#f3f5f4"/><rect width="320" height="34" fill="#075E54"/>
-                        <text x="14" y="22" fill="#fff" font-family="Arial" font-size="11" font-weight="bold">REPÚBLICA DE COSTA RICA</text>
-                        <rect x="14" y="48" width="74" height="92" rx="6" fill="#d7e0dc"/><circle cx="51" cy="78" r="16" fill="#aebfb8"/>
-                        <path d="M31 132c0-12 9-20 20-20s20 8 20 20z" fill="#aebfb8"/>
-                        <text x="102" y="62" fill="#8696a0" font-family="Arial" font-size="9">NOMBRE</text>
-                        <text x="102" y="80" fill="#111B21" font-family="Arial" font-size="13" font-weight="bold">{{ $cliente->nombre }} {{ $cliente->apellidos }}</text>
-                        <text x="102" y="112" fill="#8696a0" font-family="Arial" font-size="9">N.º DE CÉDULA</text>
-                        <text x="102" y="130" fill="#111B21" font-family="Arial" font-size="14" font-weight="bold" letter-spacing="1">{{ $cliente->cedula }}</text>
-                    </svg>
-                    <div class="cap">Foto de la cédula (sin cargar)</div>
-                </div>
-            @endif
+            <div class="cedula-grid">
+                @foreach (['Frente' => $cliente->cedula_foto_frente, 'Atrás' => $cliente->cedula_foto_atras] as $lado => $foto)
+                    <div class="cedula">
+                        @if ($foto)
+                            <img src="{{ asset('storage/'.$foto) }}" alt="{{ $lado }} de la cédula">
+                            <div class="cap">{{ $lado }}</div>
+                        @else
+                            <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="320" height="180" fill="#f3f5f4"/><rect width="320" height="34" fill="#075E54"/>
+                                <text x="14" y="22" fill="#fff" font-family="Arial" font-size="11" font-weight="bold">REPÚBLICA DE COSTA RICA</text>
+                                <rect x="14" y="48" width="74" height="92" rx="6" fill="#d7e0dc"/><circle cx="51" cy="78" r="16" fill="#aebfb8"/>
+                                <path d="M31 132c0-12 9-20 20-20s20 8 20 20z" fill="#aebfb8"/>
+                                <text x="102" y="62" fill="#8696a0" font-family="Arial" font-size="9">NOMBRE</text>
+                                <text x="102" y="80" fill="#111B21" font-family="Arial" font-size="13" font-weight="bold">{{ $cliente->nombre }} {{ $cliente->apellidos }}</text>
+                                <text x="102" y="112" fill="#8696a0" font-family="Arial" font-size="9">N.º DE CÉDULA</text>
+                                <text x="102" y="130" fill="#111B21" font-family="Arial" font-size="14" font-weight="bold" letter-spacing="1">{{ $cliente->cedula }}</text>
+                            </svg>
+                            <div class="cap">{{ $lado }} (sin cargar)</div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         <div class="actions-secondary">

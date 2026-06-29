@@ -473,6 +473,11 @@ body {
     align-items: center;
     justify-content: center;
     gap: 7px;
+    text-decoration: none;
+}
+.btn-new:hover {
+    background: var(--accent-dark);
+    color: var(--white);
 }
 .btn-new:disabled {
     background: #e3e8e5;
@@ -868,6 +873,188 @@ body {
     height: 16px;
 }
 
+/* ===== Formulario de cliente ===== */
+.form-container {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+}
+.form-field {
+    margin-bottom: 14px;
+}
+.form-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 2px 6px;
+}
+.form-field .ctrl {
+    display: flex;
+    align-items: center;
+    background: var(--beige);
+    border-radius: 10px;
+    padding: 11px 14px;
+    border: 1.5px solid transparent;
+    transition: .15s;
+    gap: 8px;
+}
+.form-field .ctrl:focus-within {
+    border-color: var(--accent);
+    background: var(--white);
+}
+.form-field .ctrl .pre {
+    font-weight: 700;
+    color: var(--muted);
+}
+.form-field .ctrl svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+.form-field input,
+.form-field select {
+    border: 0;
+    background: transparent;
+    outline: none;
+    font-family: var(--font);
+    font-size: 15px;
+    width: 100%;
+    color: var(--text);
+    font-weight: 600;
+}
+.freq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+}
+.freq-opt {
+    position: relative;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--white);
+}
+.freq-opt:hover {
+    border-color: var(--accent);
+}
+.freq-opt.on {
+    border-color: var(--accent);
+    background: #f4faf7;
+}
+.freq-opt b {
+    display: block;
+    font-size: 13px;
+}
+.freq-opt span {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 600;
+}
+.freq-opt input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+}
+.switch-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.35;
+}
+.switch-row input {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+    margin-top: 1px;
+    cursor: pointer;
+}
+.hidden-box {
+    display: none;
+    border-left: 3px solid var(--accent);
+    padding-left: 14px;
+    margin: 2px 0 6px;
+}
+.hidden-box.show {
+    display: block;
+}
+.form-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 16px 0 4px;
+}
+.form-note {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin: -2px 2px 10px;
+    line-height: 1.4;
+}
+.btn-save {
+    width: 100%;
+    border: 0;
+    background: var(--accent);
+    color: var(--white);
+    font-weight: 700;
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 13px;
+    border-radius: 13px;
+    cursor: pointer;
+    margin-top: 6px;
+}
+.btn-save:hover {
+    background: var(--accent-dark);
+    color: var(--white);
+}
+.cedula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.upl-rect-wrap {
+    display: block;
+    cursor: pointer;
+}
+.upl-rect {
+    width: 100%;
+    height: 118px;
+    border-radius: 12px;
+    border: 2px dashed var(--line);
+    background: var(--beige) center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    cursor: pointer;
+}
+.upl-rect.has {
+    border-style: solid;
+    border-color: var(--green);
+}
+.upl-rect .ph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.upl-rect .ph svg {
+    width: 26px;
+    height: 26px;
+}
+.upl-rect .ph small {
+    font-size: 11px;
+}
+
 @media (max-width: 767.98px) {
     .cards.three {
         grid-template-columns: 1fr;
@@ -904,5 +1091,14 @@ body {
     .multa-banner {
         flex-wrap: wrap;
         gap: 6px;
+    }
+    .panel {
+        padding: 14px;
+    }
+    .freq-grid {
+        gap: 6px;
+    }
+    .cedula-grid {
+        grid-template-columns: 1fr;
     }
 }

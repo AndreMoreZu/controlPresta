@@ -102,10 +102,21 @@ monto <= 150.000  → ₡3.000/día
 monto >  150.000  → ₡5.000/día
 multa = tarifa * dias_atraso
 ```
-Está **atrasado** quien no pagó el interés de su período. La multa es un cobro aparte (no se suma a la deuda ni al interés).
+**Cuándo empieza:** la multa arranca el **día siguiente** a la fecha de cobro (pasada la medianoche de ese día). El día de cobro NO cuenta como atraso.
+- Ejemplo: debía pagar el **30** y hoy es el **5** del mes siguiente → lleva **5 días** de multa (días 1, 2, 3, 4, 5).
+- Fórmula del conteo: `dias_atraso = días transcurridos desde (fecha_de_cobro + 1 día) hasta hoy`.
 
-### 5.6 Intereses atrasados
-Cada período de interés no pagado se guarda en una lista y se va acumulando aparte (con su fecha). Se pueden pagar después.
+La multa es un cobro aparte (no se suma a la deuda ni al interés). **Sigue creciendo cada día** que pase sin pagar, hasta que se registre el pago.
+
+### 5.6 Intereses atrasados (se acumulan por período, NO por día)
+A diferencia de la multa (que es diaria), el interés atrasado se acumula **por cada fecha de cobro que pasa sin pagar el interés**:
+- Llega la fecha de cobro (ej. el 30), no paga el interés → ese interés del período se acumula como "atrasado" (con su fecha).
+- Llega la **siguiente** fecha de cobro y tampoco paga → se acumula **otro** interés atrasado.
+- Y así sucesivamente, un interés atrasado por cada período (mes/quincena/semana) vencido sin pagar.
+
+Cada interés atrasado se guarda en una lista con su fecha. Se pueden pagar después.
+
+> **Resumen de la diferencia:** la **multa** cuenta **días** (sube todos los días); el **interés atrasado** cuenta **períodos** (sube cada vez que pasa una fecha de cobro sin pagar).
 
 ### 5.7 Saldar cuenta
 ```
@@ -207,12 +218,17 @@ Al saldar, todo queda en cero.
 
 ## 7. Estado actual del proyecto
 
-- ✅ Proyecto Laravel creado localmente con Laragon en `C:\laragon\www\control-prestamos`.
-- ✅ Subido a GitHub: `github.com/AndreMoreZu/controlPresta`.
-- ✅ Base de datos MySQL `controlpresta` creada y conectada en `.env`.
-- ✅ Migraciones creadas y corridas: `users`, `clientes`, `prestamos`, `pagos`, `intereses_atrasados`.
-- ✅ Prototipo visual final terminado (`index.html`) — define diseño y lógica.
-- ⏳ Pendiente: modelos Eloquent + relaciones, login, controladores, vistas Blade (Bootstrap 5), PWA.
+- ✅ Entorno completo: Laragon, MySQL `controlpresta`, Laravel, Git/GitHub (`github.com/AndreMoreZu/controlPresta`).
+- ✅ Migraciones, modelos Eloquent y relaciones.
+- ✅ Login (email + contraseña, sin roles) + dashboard, tema del prototipo.
+- ✅ Módulo **Clientes**: lista, ficha, `PrestamoService` (cálculos centralizados), formulario de crear cliente con migración manual (incluye `atraso_desde` como fuente de verdad), 2 fotos de cédula, responsive.
+- ⏳ Pendiente: Clientes Parte 3 (editar/desactivar + inactivos), módulo de Pagos, Préstamos, PWA, despliegue.
+
+### Notas para el módulo de Pagos (pendientes confirmados, NO son huecos en la base)
+Al revisar la migración de clientes se confirmó que **ningún dato crítico falta**; lo que falta es la lógica viva que se construye en Pagos. Tener en cuenta:
+1. **`dias_atraso` debe recalcularse en vivo** desde `atraso_desde` con `PrestamoService::calcularDiasAtraso()` (hoy es un snapshot del día de la migración; Pagos debe refrescarlo, no confiar en el valor guardado).
+2. **`multa_acumulada` manual queda fija** mientras sea >0. Pagos debe decidir cuándo "soltarla" (ej. ponerla en 0 tras el primer pago) para que de ahí en adelante se calcule sola con `dias_atraso × tarifa`.
+3. **El interés atrasado migrado es un monto consolidado** (un solo registro con el total del cuaderno, no uno por período). Pagos lo trata como deuda heredada y genera los nuevos período por período de ahí en adelante.
 
 ---
 
