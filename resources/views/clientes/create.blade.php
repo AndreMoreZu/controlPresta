@@ -14,83 +14,7 @@
 
             <h3>Datos del cliente</h3>
 
-            <div class="form-field">
-                <label for="nombre">Nombre</label>
-                <div class="ctrl">
-                    <input id="nombre" name="nombre" value="{{ old('nombre') }}" required autofocus>
-                </div>
-                <x-input-error :messages="$errors->get('nombre')" />
-            </div>
-
-            <div class="form-field">
-                <label for="apellidos">Apellidos</label>
-                <div class="ctrl">
-                    <input id="apellidos" name="apellidos" value="{{ old('apellidos') }}" required>
-                </div>
-                <x-input-error :messages="$errors->get('apellidos')" />
-            </div>
-
-            <div class="form-field">
-                <label for="cedula">Cédula</label>
-                <div class="ctrl">
-                    <input id="cedula" name="cedula" value="{{ old('cedula') }}">
-                </div>
-                <x-input-error :messages="$errors->get('cedula')" />
-            </div>
-
-            <div class="form-field">
-                <label for="telefono">Teléfono</label>
-                <div class="ctrl">
-                    <input id="telefono" name="telefono" class="phone-input" inputmode="tel" value="{{ old('telefono') }}">
-                </div>
-                <x-input-error :messages="$errors->get('telefono')" />
-            </div>
-
-            <div class="form-field">
-                <label for="direccion">Dirección</label>
-                <div class="ctrl">
-                    <input id="direccion" name="direccion" value="{{ old('direccion') }}">
-                </div>
-                <x-input-error :messages="$errors->get('direccion')" />
-            </div>
-
-            <div class="form-field">
-                <label for="trabajo">Trabajo</label>
-                <div class="ctrl">
-                    <input id="trabajo" name="trabajo" value="{{ old('trabajo') }}">
-                </div>
-                <x-input-error :messages="$errors->get('trabajo')" />
-            </div>
-
-            <div class="form-field">
-                <label>Foto de la cédula</label>
-                <div class="cedula-grid">
-                    <div>
-                        <label class="upl-rect-wrap">
-                            <div class="upl-rect" id="preview-cedula_foto_frente">
-                                <span class="ph">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.4"/><path d="M8.5 7l1.2-2.2h4.6L15.5 7"/></svg>
-                                    <small>Frente</small>
-                                </span>
-                            </div>
-                            <input id="cedula_foto_frente" type="file" name="cedula_foto_frente" accept="image/*" hidden>
-                        </label>
-                        <x-input-error :messages="$errors->get('cedula_foto_frente')" />
-                    </div>
-                    <div>
-                        <label class="upl-rect-wrap">
-                            <div class="upl-rect" id="preview-cedula_foto_atras">
-                                <span class="ph">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.4"/><path d="M8.5 7l1.2-2.2h4.6L15.5 7"/></svg>
-                                    <small>Atrás</small>
-                                </span>
-                            </div>
-                            <input id="cedula_foto_atras" type="file" name="cedula_foto_atras" accept="image/*" hidden>
-                        </label>
-                        <x-input-error :messages="$errors->get('cedula_foto_atras')" />
-                    </div>
-                </div>
-            </div>
+            @include('clientes._campos_cliente', ['cliente' => null])
 
             <div class="form-divider"></div>
 
@@ -109,9 +33,9 @@
                     <x-input-error :messages="$errors->get('monto')" />
                 </div>
 
-                <p class="form-note">Si lo dejás vacío, se asume igual al monto.</p>
                 <div class="form-field">
                     <label for="saldo">Saldo que debe hoy</label>
+                    <p class="form-note">Si lo dejás vacío, se toma igual al monto.</p>
                     <div class="ctrl"><span class="pre">₡</span><input id="saldo" name="saldo" class="money-input" inputmode="numeric" value="{{ old('saldo') }}"></div>
                     <x-input-error :messages="$errors->get('saldo')" />
                 </div>
@@ -137,6 +61,7 @@
 
                 <div class="form-field">
                     <label for="interes_pagados">Intereses que ya ha pagado</label>
+                    <p class="form-note">Lo que ya pagó de intereses, según tu cuaderno.</p>
                     <div class="ctrl"><span class="pre">₡</span><input id="interes_pagados" name="interes_pagados" class="money-input" inputmode="numeric" value="{{ old('interes_pagados') }}"></div>
                     <x-input-error :messages="$errors->get('interes_pagados')" />
                 </div>
@@ -149,6 +74,7 @@
 
                 <div class="form-field">
                     <label for="proximo">Fecha del próximo cobro</label>
+                    <p class="form-note">La fecha que acordaron para el siguiente pago (de aquí el sistema sabe si paga los 15, los 30, etc.).</p>
                     <div class="ctrl"><input id="proximo" type="date" name="proximo" value="{{ old('proximo') }}"></div>
                     <x-input-error :messages="$errors->get('proximo')" />
                 </div>
@@ -162,22 +88,23 @@
                 </label>
 
                 <div id="atraso-box" class="hidden-box {{ old('tiene_atraso') ? 'show' : '' }}">
-                    <p class="form-note">Poné la fecha de la primera cuota que no pagó; el sistema calculará los días de multa más adelante.</p>
-
                     <div class="form-field">
                         <label for="atraso_desde">Fecha de la cuota que no pagó</label>
+                        <p class="form-note">La primera fecha que debía pagar y no pagó.</p>
                         <div class="ctrl"><input id="atraso_desde" type="date" name="atraso_desde" value="{{ old('atraso_desde') }}"></div>
                         <x-input-error :messages="$errors->get('atraso_desde')" />
                     </div>
 
                     <div class="form-field">
                         <label for="multa_acumulada">Multa acumulada</label>
+                        <p class="form-note">La multa que ya lleva, según tu cuaderno.</p>
                         <div class="ctrl"><span class="pre">₡</span><input id="multa_acumulada" name="multa_acumulada" class="money-input" inputmode="numeric" value="{{ old('multa_acumulada') }}"></div>
                         <x-input-error :messages="$errors->get('multa_acumulada')" />
                     </div>
 
                     <div class="form-field">
                         <label for="intereses_atrasados">Intereses atrasados (sin pagar)</label>
+                        <p class="form-note">Intereses sin pagar que ya lleva acumulados.</p>
                         <div class="ctrl"><span class="pre">₡</span><input id="intereses_atrasados" name="intereses_atrasados" class="money-input" inputmode="numeric" value="{{ old('intereses_atrasados') }}"></div>
                         <x-input-error :messages="$errors->get('intereses_atrasados')" />
                     </div>

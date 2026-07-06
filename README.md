@@ -229,6 +229,7 @@ Al revisar la migración de clientes se confirmó que **ningún dato crítico fa
 1. **`dias_atraso` debe recalcularse en vivo** desde `atraso_desde` con `PrestamoService::calcularDiasAtraso()` (hoy es un snapshot del día de la migración; Pagos debe refrescarlo, no confiar en el valor guardado).
 2. **`multa_acumulada` manual queda fija** mientras sea >0. Pagos debe decidir cuándo "soltarla" (ej. ponerla en 0 tras el primer pago) para que de ahí en adelante se calcule sola con `dias_atraso × tarifa`.
 3. **El interés atrasado migrado es un monto consolidado** (un solo registro con el total del cuaderno, no uno por período). Pagos lo trata como deuda heredada y genera los nuevos período por período de ahí en adelante.
+4. **Día de cobro por cliente:** cada cliente tiene su propio día acordado (unos pagan los 15, otros los 30, etc.), definido por la fecha que se ingresa al crearlo. El sistema usa esa fecha como referencia y suma el período. **CONFIRMADO con la dueña (6 jul 2026):** el **quincenal es los días 15 y 30 de cada mes** (fijo, no "cada 15 días exactos"). Reglas de avance del próximo cobro: mensual → mismo día del mes siguiente; quincenal → alterna entre el 15 y el 30 (del 15 salta al 30 del mismo mes; del 30 salta al 15 del mes siguiente); semanal → +7 días (mismo día de semana). Nota: para fin de mes en meses de 28/29/31 días, el "30" se ajusta al último día disponible del mes.
 
 ---
 

@@ -24,11 +24,25 @@
     </div>
 
     <div class="ficha-body">
-        <div class="actions-main">
-            <button type="button" class="btn-sin-icono" disabled>Registrar pago</button>
-            <button type="button" class="btn-sin-icono" disabled>Nuevo préstamo</button>
-        </div>
-        <div class="note-locked">Estas acciones todavía no están disponibles.</div>
+        @if (!$cliente->activo)
+            <div class="banner-inactivo">
+                Este cliente está desactivado. Podés reactivarlo para que vuelva a aparecer en la lista principal.
+            </div>
+        @endif
+
+        @if ($cliente->activo)
+            <div class="actions-main">
+                @if ($prestamo && $prestamo->saldo > 0)
+                    <a href="{{ route('pagos.create', $cliente) }}" class="btn-sin-icono">Registrar pago</a>
+                @else
+                    <button type="button" class="btn-sin-icono" disabled>Registrar pago</button>
+                @endif
+                <button type="button" class="btn-sin-icono" disabled>Nuevo préstamo</button>
+            </div>
+            @unless ($prestamo && $prestamo->saldo > 0)
+                <div class="note-locked">Registrar pago estará disponible cuando haya un préstamo activo con saldo.</div>
+            @endunless
+        @endif
 
         @if ($prestamo)
             <div class="panel">
@@ -47,7 +61,7 @@
                         {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}{{ $prestamo->vencido ? ' · vencido' : '' }}
                     </span>
                 </div>
-                <div class="kv"><span class="k">Fecha primer cobro</span><span class="v">{{ $prestamo->inicio?->format('d/m/Y') ?? '—' }}</span></div>
+                <div class="kv"><span class="k">Fecha en que se prestó</span><span class="v">{{ $prestamo->inicio?->format('d/m/Y') ?? '—' }}</span></div>
             </div>
         @else
             <div class="panel">
@@ -140,8 +154,47 @@
         </div>
 
         <div class="actions-secondary">
-            <button type="button" class="btn-ghost-sm" disabled>✎ Editar</button>
-            <button type="button" class="btn-danger-sm" disabled>🗑 Desactivar</button>
+            @if ($cliente->activo)
+                <a href="{{ route('clientes.edit', $cliente) }}" class="btn-ghost-sm">✎ Editar</a>
+                <button type="button" class="btn-danger-sm"
+                        data-bs-toggle="modal" data-bs-target="#modal-desactivar">🗑 Desactivar</button>
+            @else
+                <form method="POST" action="{{ route('clientes.reactivar', $cliente) }}" class="m-0 w-100">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn-reactivar" style="width:100%;">↩ Reactivar cliente</button>
+                </form>
+            @endif
+        </div>
+
+        <div class="modal fade" id="modal-desactivar" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4 border-0 shadow">
+                    <div class="modal-header border-0 pb-1">
+                        <h5 class="modal-title fw-bold" style="font-size: 15px;">Desactivar cliente</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-1">
+                        @if ($prestamo && $prestamo->saldo > 0)
+                            <div class="warn-deuda">
+                                <strong>⚠ Deuda activa: {{ colones($prestamo->saldo) }}</strong><br>
+                                Si desactivás este cliente desaparece de la lista principal, pero su deuda queda registrada en el sistema.
+                            </div>
+                        @endif
+                        <p class="mb-0" style="font-size: 14px;">
+                            ¿Seguro que querés desactivar a <strong>{{ $cliente->nombre }} {{ $cliente->apellidos }}</strong>?
+                        </p>
+                    </div>
+                    <div class="modal-footer border-0 pt-1 gap-2">
+                        <button type="button" class="btn-ghost-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="POST" action="{{ route('clientes.desactivar', $cliente) }}" class="m-0">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="btn-danger-sm">Desactivar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="panel" style="margin-top: 16px;">

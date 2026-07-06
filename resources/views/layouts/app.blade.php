@@ -32,6 +32,9 @@
                 {{ $header ?? '' }}
             </div>
             <div class="desk-content">
+                @if (session('status'))
+                    <div class="flash-ok">{{ session('status') }}</div>
+                @endif
                 {{ $slot }}
             </div>
         </div>

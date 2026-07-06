@@ -105,6 +105,51 @@ class PrestamoService
     }
 
     /**
+     * Actualiza el préstamo migrado desde el formulario de edición del cliente (sección 10 del README).
+     *
+     * ADVERTENCIA: este método borra y recrea todos los InteresAtrasado no pagados.
+     * Está diseñado para corregir datos de migración manual (cuaderno). Una vez que el módulo
+     * de Pagos empiece a generar registros de interés por período, no debe usarse libremente
+     * (destruiría el historial de períodos vencidos). Revisitar cuando se construya Pagos.
+     */
+    public function actualizarDesdeMigracion(Prestamo $prestamo, array $datos): void
+    {
+        $atrasoDesde = $datos['atraso_desde'] ?? null;
+        $diasAtraso = $atrasoDesde ? $this->calcularDiasAtraso($atrasoDesde) : 0;
+        $multaAcumulada = $datos['multa_acumulada'] ?? 0;
+        $interesesAtrasados = $datos['intereses_atrasados'] ?? 0;
+
+        $atrasado = $diasAtraso > 0 || $multaAcumulada > 0 || $interesesAtrasados > 0;
+
+        $prestamo->update([
+            'monto'            => $datos['monto'],
+            'saldo'            => $datos['saldo'] ?? $datos['monto'],
+            'frecuencia'       => $datos['frecuencia'],
+            'interes_pagados'  => $datos['interes_pagados'] ?? 0,
+            'multa_acumulada'  => $multaAcumulada,
+            'dias_atraso'      => $diasAtraso,
+            'atraso_desde'     => $atrasoDesde,
+            'inicio'           => $datos['inicio'],
+            'proximo'          => $datos['proximo'],
+            'vencido'          => $atrasado,
+        ]);
+
+        // Borra los intereses atrasados no pagados y los recrea con el nuevo total.
+        // Ver ADVERTENCIA en el docblock: solo correcto para la fase de migración manual.
+        $prestamo->interesesAtrasados()->where('pagado', false)->delete();
+
+        if ($interesesAtrasados > 0) {
+            $prestamo->interesesAtrasados()->create([
+                'fecha'  => $atrasoDesde ?? $datos['proximo'],
+                'monto'  => $interesesAtrasados,
+                'pagado' => false,
+            ]);
+        }
+
+        $prestamo->cliente->update(['estado' => $atrasado ? 'atrasado' : 'al-dia']);
+    }
+
+    /**
      * Crea el préstamo de un cliente migrado a mano desde el cuaderno (sección 10 del README),
      * con sus datos de atraso si los tiene, y actualiza el estado del cliente.
      */
