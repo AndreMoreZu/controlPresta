@@ -63,6 +63,23 @@
     </div>
 
     <script>
+    // ── Separador de miles en el campo monto ──────────────────────────────────
+    (function () {
+        function soloDigitos(v) { return (v || '').replace(/\D/g, ''); }
+        function formatearMiles(v) { return soloDigitos(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+        document.querySelectorAll('.money-input').forEach(function (input) {
+            input.value = formatearMiles(input.value);
+            input.addEventListener('input', function () { this.value = formatearMiles(this.value); });
+        });
+
+        document.getElementById('form-prestamo').addEventListener('submit', function () {
+            document.querySelectorAll('.money-input').forEach(function (input) {
+                input.value = soloDigitos(input.value);
+            });
+        });
+    })();
+
     // Pre-sugerir fecha del primer cobro según frecuencia elegida
     (function () {
         const frecSelect = document.getElementById('frecuencia');
