@@ -26,6 +26,7 @@ class StorePagoRequest extends FormRequest
             'pago_multa'         => ['nullable', 'integer', 'min:0', 'max:999999999'],
             'pago_intereses_atr' => ['nullable', 'integer', 'min:0', 'max:999999999'],
             'abono'              => ['nullable', 'integer', 'min:0', 'max:999999999'],
+            'proximo_cobro'      => ['nullable', 'date', 'after_or_equal:today', 'before_or_equal:' . now()->addYears(2)->toDateString()],
         ];
     }
 
@@ -42,6 +43,9 @@ class StorePagoRequest extends FormRequest
             'pago_intereses_atr.min'    => 'El monto de intereses atrasados no puede ser negativo.',
             'abono.integer'             => 'El abono debe ser un número entero.',
             'abono.min'                 => 'El abono no puede ser negativo.',
+            'proximo_cobro.date'         => 'La fecha del próximo cobro no es válida.',
+            'proximo_cobro.after_or_equal'  => 'La fecha del próximo cobro no puede ser anterior a hoy.',
+            'proximo_cobro.before_or_equal' => 'La fecha del próximo cobro no puede ser más de 2 años en el futuro.',
         ];
     }
 }
