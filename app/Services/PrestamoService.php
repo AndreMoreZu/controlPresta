@@ -157,7 +157,7 @@ class PrestamoService
             ? $atrasoDesde
             : Carbon::parse($atrasoDesde);
 
-        return max(0, $fecha->startOfDay()->diffInDays(now()->startOfDay()));
+        return max(0, $fecha->copy()->startOfDay()->diffInDays(now()->startOfDay()));
     }
 
     // ── Operaciones de migración manual (§8 del README) ──────────────────────
@@ -203,6 +203,150 @@ class PrestamoService
 
         $prestamo->cliente->update(['estado' => $atrasado ? 'atrasado' : 'al-dia']);
     }
+
+    // ── Avance de fecha (reutilizado por motor de atraso y PagoService) ─────────
+
+    /**
+     * Avanza una fecha exactamente un período según la frecuencia del préstamo.
+     * Método público para que PagoService pueda delegar aquí y evitar duplicación.
+     */
+    public function avanzarFecha(Carbon $fecha, string $frecuencia): Carbon
+    {
+        return match ($frecuencia) {
+            'mensual'   => $fecha->copy()->addMonthNoOverflow(),
+            'semanal'   => $fecha->copy()->addDays(7),
+            'quincenal' => $this->proximoQuincenal($fecha),
+            default     => $fecha->copy()->addMonthNoOverflow(),
+        };
+    }
+
+    private function proximoQuincenal(Carbon $fecha): Carbon
+    {
+        if ($fecha->day <= 15) {
+            return $fecha->copy()->setDay(min(30, $fecha->daysInMonth));
+        }
+
+        return $fecha->copy()->addMonthNoOverflow()->setDay(15);
+    }
+
+    // ── Motor de atraso ───────────────────────────────────────────────────────
+
+    /**
+     * Sincroniza el estado de atraso de un préstamo activo con el calendario real.
+     *
+     * Idempotente: correrlo N veces el mismo día produce el mismo resultado.
+     * No paga nada ni avanza proximo — solo lleva la cuenta de lo vencido.
+     *
+     * Requiere: $prestamo->interesesAtrasados cargado (eager load) y $prestamo->cliente.
+     */
+    public function sincronizarAtraso(Prestamo $prestamo): void
+    {
+        // Guard: nada que sincronizar si proximo no ha vencido y no hay deuda pendiente.
+        // La comparación es ESTRICTA (lessThan): proximo = hoy significa "vence hoy",
+        // no atrasado. La multa arranca el día SIGUIENTE al vencimiento.
+        $proxVencido  = $prestamo->proximo->lessThan(today());
+        $hayPendiente = $prestamo->interes_pendiente > 0
+            || $prestamo->multa_acumulada > 0
+            || $prestamo->dias_atraso > 0
+            || $prestamo->interesesAtrasados->where('pagado', false)->isNotEmpty();
+
+        if (!$proxVencido && !$hayPendiente) {
+            return;
+        }
+
+        $updates = [];
+
+        // Paso 1: Setear atraso_desde si falta (primera detección del vencimiento).
+        // atraso_desde = la fecha en que debía pagar y no pagó = proximo.
+        // El motor NO reescribe atraso_desde si ya viene del pago o de migración.
+        if ($proxVencido && $prestamo->atraso_desde === null) {
+            $updates['atraso_desde'] = $prestamo->proximo->toDateString();
+            $updates['vencido']      = true;
+            // Reflejo en memoria para que calcularDiasAtraso en el paso 2 lo lea.
+            $prestamo->atraso_desde = $prestamo->proximo->copy();
+        }
+
+        // Paso 2: Recalcular dias_atraso (fuente de verdad = atraso_desde).
+        // Solo actualiza si el valor cambió (evita writes innecesarios cada visita).
+        if ($prestamo->atraso_desde !== null) {
+            $nuevosDias = $this->calcularDiasAtraso($prestamo->atraso_desde);
+            if ($nuevosDias !== (int) $prestamo->dias_atraso) {
+                $updates['dias_atraso'] = $nuevosDias;
+            }
+        }
+
+        if ($updates) {
+            $prestamo->update($updates);
+        }
+
+        // Paso 3: Cleanup anti-doble-cobro.
+        // Si proximo avanzó (Camino A de PagoService) a una fecha que el motor había
+        // registrado como período vencido, ese registro sobra: proximo ya lo cubre
+        // como "interés del período actual". Solo se borra si no tiene ningún abono
+        // (monto_pagado = 0). Si ya recibió dinero parcial, se respeta.
+        $prestamo->interesesAtrasados()
+            ->where('fecha', $prestamo->proximo->toDateString())
+            ->where('pagado', false)
+            ->where('monto_pagado', 0)
+            ->delete();
+
+        // Paso 4: Generar períodos vencidos POSTERIORES a proximo.
+        // El cursor parte de avanzarFecha(proximo), nunca de proximo mismo,
+        // porque proximo ya está cubierto por interesPeriodo().
+        // La condición del while es ESTRICTA (lessThan): hoy no genera registro nuevo,
+        // solo los días que ya pasaron completamente.
+        $fechasExistentes = $prestamo->interesesAtrasados
+            ->pluck('fecha')
+            ->map(fn($f) => $f instanceof Carbon ? $f->toDateString() : (string) $f)
+            ->flip()
+            ->all();
+
+        // Calcular el interés completo del período (sin interesPeriodo() porque ese
+        // método devuelve interes_pendiente cuando hay pago parcial del período actual,
+        // lo que sería incorrecto para períodos futuros completamente impagos).
+        $mitad        = $prestamo->monto / 2;
+        $base         = $prestamo->saldo > $mitad ? $prestamo->monto : $mitad;
+        $montoInteres = (int) round($base * $this->tasa($prestamo));
+
+        $proximo = $prestamo->proximo instanceof Carbon
+            ? $prestamo->proximo->copy()
+            : Carbon::parse($prestamo->proximo);
+
+        $cursor = $this->avanzarFecha($proximo, $prestamo->frecuencia);
+
+        while ($cursor->lessThan(today())) {
+            $fechaStr = $cursor->toDateString();
+
+            if (!array_key_exists($fechaStr, $fechasExistentes)) {
+                $prestamo->interesesAtrasados()->create([
+                    'fecha'  => $fechaStr,
+                    'monto'  => $montoInteres,
+                    'pagado' => false,
+                ]);
+                $fechasExistentes[$fechaStr] = true; // evita duplicado dentro del mismo run
+            }
+
+            $cursor = $this->avanzarFecha($cursor, $prestamo->frecuencia);
+        }
+
+        // Paso 5: Actualizar estado del cliente.
+        // Reload para leer los registros recién creados/borrados en DB.
+        $prestamo->refresh();
+        $prestamo->load('interesesAtrasados');
+
+        $hayDeuda = $prestamo->proximo->lessThan(today())
+            || $prestamo->interes_pendiente > 0
+            || $this->interesesAtrasadosTotal($prestamo) > 0
+            || $this->multaAcumulada($prestamo) > 0;
+
+        $estadoCliente = $hayDeuda ? 'atrasado' : 'al-dia';
+
+        if ($prestamo->cliente->estado !== $estadoCliente) {
+            $prestamo->cliente->update(['estado' => $estadoCliente]);
+        }
+    }
+
+    // ── Operaciones de migración manual (§8 del README) ──────────────────────
 
     /**
      * Crea el préstamo de un cliente migrado a mano desde el cuaderno (§8).
