@@ -53,12 +53,15 @@ class DashboardController extends Controller
             now()->endOfWeek()->toDateString(),
         ])->sum('monto_total');
 
+        $totalEnLaCalle = (int) Prestamo::where('estado', 'activo')->sum('saldo');
+
         return view('dashboard', [
             'atrasados'      => $atrasados,
             'porCobrar'      => $porCobrar,
             'conteoAlDia'    => $conteoAlDia,
             'conteoAtrasado' => $conteoAtrasado,
             'pagosSemana'    => $pagosSemana,
+            'totalEnLaCalle' => $totalEnLaCalle,
             'service'        => $this->prestamoService,
         ]);
     }
