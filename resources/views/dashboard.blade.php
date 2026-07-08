@@ -109,11 +109,16 @@
          de arriba son lo accionable; estas son solo contexto.
          ══════════════════════════════════════════════════════════ --}}
     <div class="section-title" style="margin-top: 28px;">Resumen</div>
-    <div class="cards four">
+    <div class="cards five">
         <div class="stat stat--pago">
             <div class="lab">Total en la calle</div>
             <div class="val" style="color: var(--accent-dark);">{{ colones($totalEnLaCalle) }}</div>
             <div class="sub">Saldo préstamos activos</div>
+        </div>
+        <div class="stat stat--pago">
+            <div class="lab">Total por cobrar</div>
+            <div class="val" style="color: var(--accent-dark);">{{ colones($totalPorCobrar) }}</div>
+            <div class="sub">Capital + multas + atrasos</div>
         </div>
         <div class="stat">
             <div class="lab">Clientes al día</div>

@@ -314,6 +314,9 @@ body {
 .cards.four {
     grid-template-columns: repeat(4, 1fr);
 }
+.cards.five {
+    grid-template-columns: repeat(5, 1fr);
+}
 .stat {
     background: var(--white);
     border-radius: 14px;
@@ -1486,7 +1489,8 @@ a.btn-sin-icono {
 
 @media (max-width: 767.98px) {
     .cards.three,
-    .cards.four {
+    .cards.four,
+    .cards.five {
         grid-template-columns: 1fr;
     }
     .desk-content {

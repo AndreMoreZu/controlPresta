@@ -16,7 +16,8 @@ class DashboardController extends Controller
         // ── Motor de atraso ───────────────────────────────────────────────────────
         // Sincroniza días/intereses atrasados para todos los préstamos activos.
         // Idempotente: el guard de sincronizarAtraso sale en O(1) si ya está al día.
-        Prestamo::where('estado', 'activo')
+        // Se guarda la colección para reutilizarla en los totales del dashboard.
+        $prestamosActivos = Prestamo::where('estado', 'activo')
             ->with(['interesesAtrasados', 'cliente'])
             ->get()
             ->each(fn($p) => $this->prestamoService->sincronizarAtraso($p));
@@ -53,16 +54,22 @@ class DashboardController extends Controller
             now()->endOfWeek()->toDateString(),
         ])->sum('monto_total');
 
-        $totalEnLaCalle = (int) Prestamo::where('estado', 'activo')->sum('saldo');
+        $totalEnLaCalle = (int) $prestamosActivos->sum('saldo');
+        $totalPorCobrar = (int) $prestamosActivos->sum(function ($p) {
+            return $p->saldo
+                + $this->prestamoService->multaAcumulada($p)
+                + $this->prestamoService->interesesAtrasadosTotal($p);
+        });
 
         return view('dashboard', [
-            'atrasados'      => $atrasados,
-            'porCobrar'      => $porCobrar,
-            'conteoAlDia'    => $conteoAlDia,
-            'conteoAtrasado' => $conteoAtrasado,
-            'pagosSemana'    => $pagosSemana,
-            'totalEnLaCalle' => $totalEnLaCalle,
-            'service'        => $this->prestamoService,
+            'atrasados'       => $atrasados,
+            'porCobrar'       => $porCobrar,
+            'conteoAlDia'     => $conteoAlDia,
+            'conteoAtrasado'  => $conteoAtrasado,
+            'pagosSemana'     => $pagosSemana,
+            'totalEnLaCalle'  => $totalEnLaCalle,
+            'totalPorCobrar'  => $totalPorCobrar,
+            'service'         => $this->prestamoService,
         ]);
     }
 }
