@@ -134,6 +134,32 @@
                 <input type="hidden" name="pago_intereses_atr" value="0">
             @endif
 
+            {{-- ── Próximo cobro (solo en Camino A: cuando hay interés del período) ── --}}
+            {{-- Solo se aplica si el interés queda COMPLETO. Si queda parcial       --}}
+            {{-- (Camino B), proximo no avanza y esta fecha se ignora.               --}}
+            @if ($cobrarInteres)
+                <div class="panel" style="margin-bottom: 14px;">
+                    <h3>Fecha del próximo cobro
+                        <span class="sub">Se aplica solo si el interés queda completo</span>
+                    </h3>
+                    <div class="form-field" style="margin: 0;">
+                        <div class="ctrl">
+                            <input type="date"
+                                   id="proximo_cobro"
+                                   name="proximo_cobro"
+                                   value="{{ old('proximo_cobro', $proximoSugerido) }}">
+                        </div>
+                        <x-input-error :messages="$errors->get('proximo_cobro')" class="field-error" />
+                        <p class="form-note" style="margin-top: 6px;">
+                            Si el interés queda incompleto (pago parcial), esta fecha no se usa
+                            y el cobro se mantiene en {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}.
+                        </p>
+                    </div>
+                </div>
+            @else
+                <input type="hidden" name="proximo_cobro" value="">
+            @endif
+
             {{-- ── Abono al capital (siempre visible) ──────────────────────────── --}}
             <div class="panel" style="margin-bottom: 14px;">
                 <h3>Abono al capital

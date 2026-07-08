@@ -13,6 +13,14 @@ class DashboardController extends Controller
 
     public function index()
     {
+        // ── Motor de atraso ───────────────────────────────────────────────────────
+        // Sincroniza días/intereses atrasados para todos los préstamos activos.
+        // Idempotente: el guard de sincronizarAtraso sale en O(1) si ya está al día.
+        Prestamo::where('estado', 'activo')
+            ->with(['interesesAtrasados', 'cliente'])
+            ->get()
+            ->each(fn($p) => $this->prestamoService->sincronizarAtraso($p));
+
         // ── Sección 1: Atrasados ──────────────────────────────────────────────────
         // Carga interesesAtrasados porque interesesAtrasadosTotal() los necesita.
         // Orden: atraso_desde ASC → el que lleva más tiempo sin pagar va primero.

@@ -104,7 +104,8 @@ class PagoService
 
         if ($interesCompleto) {
             // Camino A: interés del período pagado completo → atraso se cierra.
-            $this->aplicarCaminoA($prestamo, $nuevoSaldo, $saldado, $multaTotal, $multaPagada, $interesPagado);
+            // Pasa la fecha del formulario; si no viene, aplicarCaminoA usa avanzarProximo().
+            $this->aplicarCaminoA($prestamo, $nuevoSaldo, $saldado, $multaTotal, $multaPagada, $interesPagado, $datos['proximo_cobro'] ?? null);
         } elseif ($cobrarInteres) {
             // Camino B: interés del período pagado parcial → proximo no avanza.
             $this->aplicarCaminoB($prestamo, $nuevoSaldo, $saldado, $interesTotal, $interesPagado, $multaPagada);
@@ -147,23 +148,25 @@ class PagoService
         int $multaTotal,
         int $multaPagada,
         int $interesPagado,
+        ?string $proximoCobro = null,
     ): void {
-        // Lo que quedó de multa sin pagar hoy. Como multaTotal ya es la neta
-        // (incluye el descuento de multa_ya_pagada acumulada), aquí solo restamos
-        // lo que el cliente pagó en este momento.
         $multaRestante = max(0, $multaTotal - $multaPagada);
+
+        // Fecha del próximo cobro: usar la del formulario si viene válida,
+        // si no, calcular automáticamente. proximo NUNCA queda null.
+        $nuevoProximo = $saldado ? $prestamo->proximo
+            : ($proximoCobro ? Carbon::parse($proximoCobro) : $this->avanzarProximo($prestamo));
 
         $prestamo->update([
             'saldo'              => $nuevoSaldo,
             'interes_pagados'    => $prestamo->interes_pagados + $interesPagado,
-            'interes_pendiente'  => 0,             // atraso cerrado, sin pendiente
-            'multa_acumulada'    => $multaRestante, // 0 = limpio; > 0 = congelada
-            'multa_ya_pagada'    => 0,             // reset del crédito del ciclo
+            'interes_pendiente'  => 0,
+            'multa_acumulada'    => $multaRestante,
+            'multa_ya_pagada'    => 0,
             'dias_atraso'        => 0,
             'atraso_desde'       => null,
             'vencido'            => false,
-            // proximo avanza solo si el préstamo no queda saldado
-            'proximo'            => $saldado ? $prestamo->proximo : $this->avanzarProximo($prestamo),
+            'proximo'            => $nuevoProximo,
             'estado'             => $saldado ? 'saldado' : 'activo',
         ]);
     }
@@ -285,38 +288,14 @@ class PagoService
 
     /**
      * Calcula la próxima fecha de cobro según la frecuencia del préstamo (§5.2).
-     *
-     * Quincenal alterna estrictamente entre el 15 y el 30 de cada mes.
-     * En meses cortos (feb, sep, etc.) el "30" se ajusta al último día disponible.
+     * Delega a PrestamoService::avanzarFecha() — lógica centralizada allá.
      */
-    private function avanzarProximo(Prestamo $prestamo): Carbon
+    public function avanzarProximo(Prestamo $prestamo): Carbon
     {
         $actual = $prestamo->proximo instanceof Carbon
             ? $prestamo->proximo->copy()
             : Carbon::parse($prestamo->proximo);
 
-        return match ($prestamo->frecuencia) {
-            'mensual'   => $actual->addMonthNoOverflow(),
-            'semanal'   => $actual->addDays(7),
-            'quincenal' => $this->proximoQuincenal($actual),
-            default     => $actual->addMonthNoOverflow(),
-        };
-    }
-
-    /**
-     * Avance quincenal: alterna 15 ↔ 30 del mes (confirmado con la dueña, §7 del README).
-     *
-     * Del 15 → al 30 (o último día si el mes tiene menos de 30, ej. febrero).
-     * Del 30 (o fin de mes) → al 15 del mes siguiente.
-     *
-     * Ejemplos: 15-oct → 30-oct; 30-oct → 15-nov; 15-feb → 28-feb; 28-feb → 15-mar.
-     */
-    private function proximoQuincenal(Carbon $fecha): Carbon
-    {
-        if ($fecha->day <= 15) {
-            return $fecha->copy()->setDay(min(30, $fecha->daysInMonth));
-        }
-
-        return $fecha->copy()->addMonthNoOverflow()->setDay(15);
+        return $this->prestamoService->avanzarFecha($actual, $prestamo->frecuencia);
     }
 }
