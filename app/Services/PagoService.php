@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Pago;
 use App\Models\Prestamo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Registra pagos con soporte completo de pagos parciales (§5.9 del README).
@@ -280,6 +281,74 @@ class PagoService
         $prestamo->cliente->update([
             'estado' => $quedaAlgo ? 'atrasado' : 'al-dia',
         ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Saldar cuenta completa (§5.7)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Liquida la cuenta completa del cliente en un solo movimiento.
+     *
+     * Registra un pago con es_saldo = true que cubre:
+     *   - abono = saldo (cancela toda la deuda)
+     *   - interes_atrasado_pagado = total intereses atrasados pendientes
+     *   - multa_pagada = multa acumulada neta
+     *
+     * El interés del período NO se incluye aquí (§5.7: total = deuda + atrasados + multa).
+     * Si el cliente también quiere pagar el interés del período, primero registrá un
+     * pago normal y luego saldá.
+     *
+     * Efectos: prestamo.estado = saldado, saldo = 0, intereses_atrasados todos pagados,
+     * cliente.estado = sin-prestamo (si no queda otro préstamo activo).
+     */
+    public function saldarCuenta(Prestamo $prestamo, array $datos): Pago
+    {
+        $saldo       = (int) $prestamo->saldo;
+        $multa       = $this->prestamoService->multaAcumulada($prestamo);
+        $atrasados   = $this->prestamoService->interesesAtrasadosTotal($prestamo);
+        $montoTotal  = $saldo + $multa + $atrasados;
+
+        $pago = $prestamo->pagos()->create([
+            'fecha'                   => today(),
+            'monto_total'             => $montoTotal,
+            'interes'                 => 0,
+            'abono'                   => $saldo,
+            'interes_atrasado_pagado' => $atrasados,
+            'multa_pagada'            => $multa,
+            'metodo'                  => $datos['metodo'],
+            'recibido_por'            => $datos['recibido_por'] ?? null,
+            'es_saldo'                => true,
+        ]);
+
+        // Marcar todos los intereses atrasados pendientes como pagados
+        $prestamo->interesesAtrasados()
+            ->where('pagado', false)
+            ->update(['pagado' => true, 'monto_pagado' => \DB::raw('monto')]);
+
+        // Cerrar el préstamo
+        $prestamo->update([
+            'saldo'             => 0,
+            'estado'            => 'saldado',
+            'multa_acumulada'   => 0,
+            'multa_ya_pagada'   => 0,
+            'dias_atraso'       => 0,
+            'atraso_desde'      => null,
+            'vencido'           => false,
+            'interes_pendiente' => 0,
+        ]);
+
+        // Estado del cliente
+        $tieneOtroActivo = $prestamo->cliente
+            ->prestamos()
+            ->where('estado', 'activo')
+            ->exists();
+
+        $prestamo->cliente->update([
+            'estado' => $tieneOtroActivo ? 'al-dia' : 'sin-prestamo',
+        ]);
+
+        return $pago;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

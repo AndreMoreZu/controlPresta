@@ -129,6 +129,16 @@
                         <span class="k" style="font-weight: 700;">Total adeudado</span>
                         <span class="v" style="font-size: 20px; font-weight: 800; color: var(--accent-dark);">{{ colones($totalSaldar) }}</span>
                     </div>
+                    @if ($cliente->activo)
+                        <div style="margin-top: 14px;">
+                            <a href="{{ route('pagos.saldar', $cliente) }}"
+                               style="display:block; text-align:center; padding: 11px; border-radius: 10px;
+                                      background: var(--red); color: #fff; font-weight: 700; font-size: 14px;
+                                      text-decoration: none;">
+                                Saldar cuenta completa — {{ colones($totalSaldar) }}
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @endif
         @endif

@@ -75,6 +75,48 @@ class PagoController extends Controller
             ->with('status', 'Pago registrado correctamente.');
     }
 
+    /**
+     * Formulario de saldar cuenta completa.
+     */
+    public function saldoCreate(Cliente $cliente)
+    {
+        $prestamo = $this->prestamo($cliente);
+        $prestamo->load('interesesAtrasados');
+
+        $multa     = $this->prestamoService->multaAcumulada($prestamo);
+        $atrasados = $this->prestamoService->interesesAtrasadosTotal($prestamo);
+        $total     = $this->prestamoService->totalASaldar($prestamo);
+
+        return view('pagos.saldar', [
+            'cliente'   => $cliente,
+            'prestamo'  => $prestamo,
+            'multa'     => $multa,
+            'atrasados' => $atrasados,
+            'total'     => $total,
+        ]);
+    }
+
+    /**
+     * Ejecuta la liquidación completa de la cuenta.
+     */
+    public function saldoStore(Cliente $cliente)
+    {
+        $prestamo = $this->prestamo($cliente);
+        $prestamo->load('interesesAtrasados');
+
+        $metodo = request()->input('metodo');
+        abort_unless(in_array($metodo, ['efectivo', 'sinpe', 'transferencia'], true), 422);
+
+        $this->pagoService->saldarCuenta($prestamo, [
+            'metodo'       => $metodo,
+            'recibido_por' => auth()->id(),
+        ]);
+
+        return redirect()
+            ->route('clientes.show', $cliente)
+            ->with('status', 'Cuenta saldada correctamente.');
+    }
+
     /** Obtiene el préstamo activo del cliente o aborta con 404. */
     private function prestamo(Cliente $cliente): Prestamo
     {
