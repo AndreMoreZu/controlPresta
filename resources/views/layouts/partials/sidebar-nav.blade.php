@@ -1,8 +1,8 @@
 <div class="side-head">
     <div class="logo">₡</div>
     <div>
-        <b>ControlPresta</b>
-        <span>Panel interno</span>
+        <b>Gestión Interna</b>
+        <span>Préstamos</span>
     </div>
 </div>
 <nav class="desk-nav">

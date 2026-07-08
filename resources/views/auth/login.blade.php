@@ -2,8 +2,8 @@
     <div class="login-wrap">
         <div class="login-card">
             <div class="login-logo"><b>₡</b></div>
-            <h1>ControlPresta</h1>
-            <div class="tag-line">controlpresta.com</div>
+            <h1>Gestión Interna</h1>
+            <div class="tag-line">Préstamos</div>
 
             <x-auth-session-status class="mb-3" :status="session('status')" />
 

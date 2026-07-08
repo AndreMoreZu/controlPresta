@@ -26,7 +26,7 @@
                 <button type="button" class="mobile-menu-btn" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Abrir menú">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                 </button>
-                <b>ControlPresta</b>
+                <b>Gestión Interna</b>
             </div>
             <div class="desk-topbar">
                 {{ $header ?? '' }}
