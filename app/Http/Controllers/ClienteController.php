@@ -56,6 +56,14 @@ class ClienteController extends Controller
             $prestamo->load(['pagos', 'interesesAtrasados']);
         }
 
+        $cobrarInteres = $prestamo
+            ? (today()->greaterThanOrEqualTo($prestamo->proximo) || $prestamo->interes_pendiente > 0)
+            : false;
+
+        $interesPeriodo = ($prestamo && $cobrarInteres)
+            ? $this->prestamoService->interesPeriodo($prestamo)
+            : 0;
+
         $prestamosAnteriores = $cliente->prestamos
             ->where('estado', 'saldado')
             ->sortByDesc('inicio');
@@ -65,6 +73,8 @@ class ClienteController extends Controller
             'prestamo'            => $prestamo,
             'service'             => $this->prestamoService,
             'prestamosAnteriores' => $prestamosAnteriores,
+            'cobrarInteres'       => $cobrarInteres,
+            'interesPeriodo'      => $interesPeriodo,
         ]);
     }
 

@@ -77,27 +77,39 @@ class PagoController extends Controller
 
     /**
      * Formulario de saldar cuenta completa.
+     *
+     * Calcula cada concepto por separado para pasárselos al desglose editable.
+     * cobrarInteres controla si el interés del período aparece en el desglose.
      */
     public function saldoCreate(Cliente $cliente)
     {
         $prestamo = $this->prestamo($cliente);
         $prestamo->load('interesesAtrasados');
 
+        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
+            || $prestamo->interes_pendiente > 0;
+
+        $interes   = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
         $multa     = $this->prestamoService->multaAcumulada($prestamo);
         $atrasados = $this->prestamoService->interesesAtrasadosTotal($prestamo);
-        $total     = $this->prestamoService->totalASaldar($prestamo);
+        $total     = $prestamo->saldo + $interes + $atrasados + $multa;
 
         return view('pagos.saldar', [
-            'cliente'   => $cliente,
-            'prestamo'  => $prestamo,
-            'multa'     => $multa,
-            'atrasados' => $atrasados,
-            'total'     => $total,
+            'cliente'       => $cliente,
+            'prestamo'      => $prestamo,
+            'cobrarInteres' => $cobrarInteres,
+            'interes'       => $interes,
+            'multa'         => $multa,
+            'atrasados'     => $atrasados,
+            'total'         => $total,
         ]);
     }
 
     /**
      * Ejecuta la liquidación completa de la cuenta.
+     *
+     * Los montos de cada concepto vienen del formulario (editables por el operador).
+     * PagoService::saldarCuenta() los clampea al máximo real de cada deuda.
      */
     public function saldoStore(Cliente $cliente)
     {
@@ -108,8 +120,11 @@ class PagoController extends Controller
         abort_unless(in_array($metodo, ['efectivo', 'sinpe', 'transferencia'], true), 422);
 
         $this->pagoService->saldarCuenta($prestamo, [
-            'metodo'       => $metodo,
-            'recibido_por' => auth()->id(),
+            'metodo'             => $metodo,
+            'recibido_por'       => auth()->id(),
+            'pago_interes'       => (int) request()->input('pago_interes', 0),
+            'pago_multa'         => (int) request()->input('pago_multa', 0),
+            'pago_intereses_atr' => (int) request()->input('pago_intereses_atr', 0),
         ]);
 
         return redirect()

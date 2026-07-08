@@ -127,11 +127,16 @@ class PrestamoService
 
     /**
      * Monto total para saldar la cuenta completa hoy (§5.7).
-     * No incluye el interés del período (que va aparte); solo deuda + atrasos + multa.
+     * Incluye el interés del período si ya venció (cobrarInteres = true).
+     * total = saldo + interés del período pendiente + intereses atrasados + multa
      */
     public function totalASaldar(Prestamo $prestamo): int
     {
+        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
+            || $prestamo->interes_pendiente > 0;
+
         return $prestamo->saldo
+            + ($cobrarInteres ? $this->interesPeriodo($prestamo) : 0)
             + $this->interesesAtrasadosTotal($prestamo)
             + $this->multaAcumulada($prestamo);
     }

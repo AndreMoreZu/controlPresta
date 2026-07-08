@@ -123,6 +123,9 @@
                 <div class="panel" style="border-color: var(--accent); background: #f4faf7;">
                     <h3 style="color: var(--accent-dark);">Resumen de deuda total</h3>
                     <div class="kv"><span class="k">Deuda principal</span><span class="v">{{ colones($prestamo->saldo) }}</span></div>
+                    @if ($cobrarInteres && $interesPeriodo > 0)
+                        <div class="kv"><span class="k">Interés del período</span><span class="v" style="color: var(--accent-dark);">{{ colones($interesPeriodo) }}</span></div>
+                    @endif
                     <div class="kv"><span class="k">Multa por atraso</span><span class="v" style="color: var(--red);">{{ colones($multa) }}</span></div>
                     <div class="kv"><span class="k">Intereses no pagados</span><span class="v" style="color: #b47d3a;">{{ colones($interesesAtr) }}</span></div>
                     <div class="kv" style="border-top: 2px solid var(--line); padding-top: 12px; margin-top: 4px;">

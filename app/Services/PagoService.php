@@ -288,34 +288,44 @@ class PagoService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Liquida la cuenta completa del cliente en un solo movimiento.
+     * Liquida la cuenta completa del cliente en un solo movimiento (§5.7).
+     *
+     * Los montos vienen del formulario (editados por el operador si hubo ajuste).
+     * Cada concepto se clampea al máximo real para no cobrar de más.
      *
      * Registra un pago con es_saldo = true que cubre:
-     *   - abono = saldo (cancela toda la deuda)
+     *   - abono = saldo completo (cancela toda la deuda de capital)
+     *   - interes = interés del período si ya venció (editado en el formulario)
      *   - interes_atrasado_pagado = total intereses atrasados pendientes
      *   - multa_pagada = multa acumulada neta
-     *
-     * El interés del período NO se incluye aquí (§5.7: total = deuda + atrasados + multa).
-     * Si el cliente también quiere pagar el interés del período, primero registrá un
-     * pago normal y luego saldá.
      *
      * Efectos: prestamo.estado = saldado, saldo = 0, intereses_atrasados todos pagados,
      * cliente.estado = sin-prestamo (si no queda otro préstamo activo).
      */
     public function saldarCuenta(Prestamo $prestamo, array $datos): Pago
     {
-        $saldo       = (int) $prestamo->saldo;
-        $multa       = $this->prestamoService->multaAcumulada($prestamo);
-        $atrasados   = $this->prestamoService->interesesAtrasadosTotal($prestamo);
-        $montoTotal  = $saldo + $multa + $atrasados;
+        $saldo        = (int) $prestamo->saldo;
+        $multaMax     = $this->prestamoService->multaAcumulada($prestamo);
+        $atrasadosMax = $this->prestamoService->interesesAtrasadosTotal($prestamo);
+
+        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
+            || $prestamo->interes_pendiente > 0;
+        $interesMax    = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
+
+        // Clampear al máximo de cada concepto para no registrar más de lo que se debe.
+        $interesPagado    = min((int) ($datos['pago_interes']       ?? $interesMax),    $interesMax);
+        $multaPagada      = min((int) ($datos['pago_multa']         ?? $multaMax),      $multaMax);
+        $atrasadosPagados = min((int) ($datos['pago_intereses_atr'] ?? $atrasadosMax),  $atrasadosMax);
+
+        $montoTotal = $saldo + $interesPagado + $multaPagada + $atrasadosPagados;
 
         $pago = $prestamo->pagos()->create([
             'fecha'                   => today(),
             'monto_total'             => $montoTotal,
-            'interes'                 => 0,
+            'interes'                 => $interesPagado,
             'abono'                   => $saldo,
-            'interes_atrasado_pagado' => $atrasados,
-            'multa_pagada'            => $multa,
+            'interes_atrasado_pagado' => $atrasadosPagados,
+            'multa_pagada'            => $multaPagada,
             'metodo'                  => $datos['metodo'],
             'recibido_por'            => $datos['recibido_por'] ?? null,
             'es_saldo'                => true,
@@ -336,6 +346,7 @@ class PagoService
             'atraso_desde'      => null,
             'vencido'           => false,
             'interes_pendiente' => 0,
+            'interes_pagados'   => $prestamo->interes_pagados + $interesPagado,
         ]);
 
         // Estado del cliente

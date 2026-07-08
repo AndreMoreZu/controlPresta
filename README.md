@@ -60,7 +60,7 @@ Todos los usuarios tienen **acceso total** (mismas opciones y permisos). No hay 
 6. **Pagos** — botón "Registrar pago". Separa **interés (obligatorio)** del **abono (opcional)**. El abono baja la deuda; el interés no.
 7. **Intereses atrasados** — panel que acumula los períodos de interés NO pagados, con su fecha.
 8. **Multas por atraso** — panel que muestra la multa acumulada (por día), con la fecha de cada día.
-9. **Saldar cuenta completa** — muestra el desglose (deuda + intereses atrasados + multa) y un total para liquidar todo de una vez.
+9. **Saldar cuenta completa** — desglose editable (deuda + interés del período + intereses atrasados + multa) y total en vivo para liquidar todo de una vez.
 
 ---
 
@@ -120,8 +120,10 @@ Cada interés atrasado se guarda en una lista con su fecha. Se pueden pagar desp
 
 ### 5.7 Saldar cuenta
 ```
-total_a_pagar = saldo (deuda) + intereses_atrasados + multa_acumulada
+total_a_pagar = saldo (deuda) + interés del período pendiente + intereses_atrasados + multa_acumulada
 ```
+El interés del período solo se incluye si ya venció (`proximo <= hoy` o `interes_pendiente > 0`).
+El desglose es editable por concepto (el operador puede ajustar cada monto).
 Al saldar, todo queda en cero.
 
 ### 5.8 Estados del cliente
