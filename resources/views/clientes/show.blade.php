@@ -15,6 +15,8 @@
             <div class="meta">
                 @if ($cliente->estado === 'atrasado')
                     <span class="tag late">Atrasado</span>
+                @elseif ($cliente->estado === 'sin-prestamo')
+                    <span class="tag none">Sin préstamo</span>
                 @else
                     <span class="tag ok">Al día</span>
                 @endif
@@ -214,5 +216,29 @@
                 <div style="color: var(--muted); font-size: 13px;">Sin pagos registrados.</div>
             @endforelse
         </div>
+
+        {{-- Préstamos anteriores (saldados) — lista de tarjetas tocables --}}
+        @if ($prestamosAnteriores->isNotEmpty())
+            <div class="panel" style="margin-top: 13px;">
+                <h3>Préstamos anteriores</h3>
+                @foreach ($prestamosAnteriores as $anterior)
+                    @php $ultimoPago = $anterior->pagos->sortByDesc('fecha')->first(); @endphp
+                    <a href="{{ route('prestamos.show', [$cliente, $anterior]) }}" class="hist-anterior">
+                        <div class="ha-info">
+                            <div class="ha-top">
+                                <span class="tag ok ha-tag">Saldado</span>
+                                <strong class="ha-monto">{{ colones($anterior->monto) }}</strong>
+                                <span class="ha-freq">· {{ ucfirst($anterior->frecuencia) }}</span>
+                            </div>
+                            <div class="ha-fechas">
+                                {{ $anterior->inicio?->format('d/m/Y') ?? '—' }}
+                                → {{ $ultimoPago?->fecha->format('d/m/Y') ?? '—' }}
+                            </div>
+                        </div>
+                        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+                    </a>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-app-layout>

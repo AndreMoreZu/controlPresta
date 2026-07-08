@@ -31,6 +31,8 @@ class DatabaseSeeder extends Seeder
         $this->atrasadoVariosPeriodos();
         $this->casiSaldado();
         $this->sinPrestamo();
+        $this->atrasadoProximoFuturo();
+        $this->porCobrarEstaSemana();
     }
 
     /**
@@ -220,8 +222,156 @@ class DatabaseSeeder extends Seeder
             'telefono'  => '8888-5555',
             'direccion' => 'Limón, Puerto Viejo',
             'trabajo'   => null,
+            'estado'    => 'sin-prestamo',
+            'activo'    => true,
+        ]);
+    }
+
+    /**
+     * Caso 6: CASO BORDE — atrasado con multa e intereses atrasados,
+     * pero proximo todavía no llegó (está en el futuro).
+     *
+     * Situación real: el cliente se atrasó en un período viejo, acumuló multa
+     * e interés atrasado. Luego pagó el interés de ese período (avanzando proximo),
+     * pero dejó la multa y los intereses atrasados pendientes. Hoy estamos
+     * ENTRE el período vencido y la próxima fecha de cobro.
+     *
+     * Lo que debe:
+     *   - Multa dinámica: 7 días × ₡3.000 = ₡21.000
+     *   - Interés atrasado: ₡15.000 (el período que no cerró)
+     *   - Interés del período nuevo: NO (proximo = +5 días, aún no vence)
+     *
+     * Este caso verifica que el formulario muestre multa + atrasados
+     * aunque cobrarInteres sea false (proximo en el futuro).
+     */
+    private function atrasadoProximoFuturo(): void
+    {
+        // atraso_desde = hace 7 días (fecha de la cuota que no pagó; multa arranca al día siguiente)
+        $atrasoDesde = now()->subDays(7)->startOfDay();
+
+        $cliente = Cliente::create([
+            'nombre'    => 'Diego',
+            'apellidos' => 'Vargas Núñez',
+            'cedula'    => '6-6666-6666',
+            'telefono'  => '8888-6666',
+            'direccion' => 'Heredia, Barva',
+            'trabajo'   => 'Carnicería Don Felipe',
+            'estado'    => 'atrasado',
+            'activo'    => true,
+        ]);
+
+        $prestamo = $cliente->prestamos()->create([
+            'monto'           => 100000,
+            'saldo'           => 100000,
+            'frecuencia'      => 'quincenal',
+            'interes_pagados' => 15000,      // pagó el interés del período, por eso proximo avanzó
+            'multa_acumulada' => 0,          // dinámica: 7 × ₡3.000 = ₡21.000
+            'multa_ya_pagada' => 0,
+            'interes_pendiente' => 0,
+            'dias_atraso'     => 7,
+            'atraso_desde'    => $atrasoDesde,
+            'inicio'          => now()->subDays(22)->startOfDay(),
+            // proximo EN EL FUTURO: el período nuevo aún no vence
+            'proximo'         => now()->addDays(5)->startOfDay(),
+            'vencido'         => true,       // sigue atrasado (debe multa + interés atrasado)
+            'estado'          => 'activo',
+        ]);
+
+        // Interés atrasado del período vencido: ₡100.000 × 15% = ₡15.000
+        $prestamo->interesesAtrasados()->create([
+            'fecha'       => $atrasoDesde,
+            'monto'       => 15000,
+            'monto_pagado' => 0,
+            'pagado'      => false,
+        ]);
+    }
+
+    /**
+     * Casos 7-9: clientes al día con cobro dentro de los próximos 7 días.
+     * Cubren las tres frecuencias (semanal, quincenal, mensual) y distintos montos
+     * para que el dashboard "Por cobrar esta semana" siempre tenga datos al seedear.
+     *
+     * proximo se fija con today() + N días para que la query
+     * whereBetween(today, today+7) los capture independientemente de cuándo se seedea.
+     */
+    private function porCobrarEstaSemana(): void
+    {
+        // Caso 7: cobro hoy (semanal, ₡80.000)
+        // Interés esperado: ₡80.000 × 5% = ₡4.000
+        $c7 = Cliente::create([
+            'nombre'    => 'Sofía',
+            'apellidos' => 'Mora Alpízar',
+            'cedula'    => '7-7777-7777',
+            'telefono'  => '8888-7777',
+            'direccion' => 'San José, Escazú',
+            'trabajo'   => 'Peluquería Sofía',
             'estado'    => 'al-dia',
             'activo'    => true,
+        ]);
+        $c7->prestamos()->create([
+            'monto'           => 80000,
+            'saldo'           => 80000,
+            'frecuencia'      => 'semanal',
+            'interes_pagados' => 20000,
+            'multa_acumulada' => 0,
+            'dias_atraso'     => 0,
+            'atraso_desde'    => null,
+            'inicio'          => now()->subWeeks(5)->startOfDay(),
+            'proximo'         => today(),             // cobrar HOY
+            'vencido'         => false,
+            'estado'          => 'activo',
+        ]);
+
+        // Caso 8: cobro en 3 días (quincenal, ₡150.000)
+        // Interés esperado: ₡150.000 × 15% = ₡22.500
+        $c8 = Cliente::create([
+            'nombre'    => 'Andrés',
+            'apellidos' => 'Céspedes Ulate',
+            'cedula'    => '8-8888-8888',
+            'telefono'  => '8888-8888',
+            'direccion' => 'Alajuela, Desamparados',
+            'trabajo'   => 'Ferretería El Tornillo',
+            'estado'    => 'al-dia',
+            'activo'    => true,
+        ]);
+        $c8->prestamos()->create([
+            'monto'           => 150000,
+            'saldo'           => 150000,
+            'frecuencia'      => 'quincenal',
+            'interes_pagados' => 45000,
+            'multa_acumulada' => 0,
+            'dias_atraso'     => 0,
+            'atraso_desde'    => null,
+            'inicio'          => now()->subDays(42)->startOfDay(),
+            'proximo'         => today()->addDays(3), // cobra en 3 días
+            'vencido'         => false,
+            'estado'          => 'activo',
+        ]);
+
+        // Caso 9: cobro en 6 días (mensual, ₡250.000)
+        // Interés esperado: ₡250.000 × 20% = ₡50.000
+        $c9 = Cliente::create([
+            'nombre'    => 'Valeria',
+            'apellidos' => 'Quesada Brenes',
+            'cedula'    => '9-9999-9999',
+            'telefono'  => '8888-9999',
+            'direccion' => 'Cartago, Tres Ríos',
+            'trabajo'   => 'Salón de belleza',
+            'estado'    => 'al-dia',
+            'activo'    => true,
+        ]);
+        $c9->prestamos()->create([
+            'monto'           => 250000,
+            'saldo'           => 250000,
+            'frecuencia'      => 'mensual',
+            'interes_pagados' => 100000,
+            'multa_acumulada' => 0,
+            'dias_atraso'     => 0,
+            'atraso_desde'    => null,
+            'inicio'          => now()->subMonths(4)->startOfDay(),
+            'proximo'         => today()->addDays(6), // cobra en 6 días
+            'vencido'         => false,
+            'estado'          => 'activo',
         ]);
     }
 }

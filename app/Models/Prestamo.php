@@ -13,7 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'saldo',
     'frecuencia',
     'interes_pagados',
+    'interes_pendiente',
     'multa_acumulada',
+    'multa_ya_pagada',
     'dias_atraso',
     'atraso_desde',
     'inicio',
@@ -31,15 +33,17 @@ class Prestamo extends Model
     protected function casts(): array
     {
         return [
-            'monto' => 'integer',
-            'saldo' => 'integer',
-            'interes_pagados' => 'integer',
-            'multa_acumulada' => 'integer',
-            'dias_atraso' => 'integer',
-            'atraso_desde' => 'date',
-            'inicio' => 'date',
-            'proximo' => 'date',
-            'vencido' => 'boolean',
+            'monto'              => 'integer',
+            'saldo'              => 'integer',
+            'interes_pagados'    => 'integer',
+            'interes_pendiente'  => 'integer',
+            'multa_acumulada'    => 'integer',
+            'multa_ya_pagada'    => 'integer',
+            'dias_atraso'        => 'integer',
+            'atraso_desde'       => 'date',
+            'inicio'             => 'date',
+            'proximo'            => 'date',
+            'vencido'            => 'boolean',
         ];
     }
 

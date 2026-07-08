@@ -1,8 +1,8 @@
 :root {
-    --green: #075E54;
-    --green-dark: #054640;
-    --accent: #0E8C4F;
-    --accent-dark: #0A6E3D;
+    --green: #2C4A34;
+    --green-dark: #1E3325;
+    --accent: #3A6B4A;
+    --accent-dark: #2C5238;
     --beige: #ECE5DD;
     --white: #FFFFFF;
     --text: #111B21;
@@ -1148,6 +1148,179 @@ a.btn-ghost-sm {
     margin-bottom: 16px;
 }
 
+/* ===== Tag "Sin préstamo" ===== */
+.tag.none {
+    color: var(--muted);
+    border: 1px solid var(--line);
+}
+
+/* ===== Tarjetas "Préstamos anteriores" en la ficha ===== */
+.hist-anterior {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line-soft);
+    text-decoration: none;
+    color: var(--text);
+}
+
+.hist-anterior:last-child {
+    border-bottom: none;
+}
+
+.hist-anterior:hover .ha-monto {
+    color: var(--accent-dark);
+}
+
+.ha-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ha-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.ha-tag {
+    font-size: 10px;
+    padding: 3px 9px;
+}
+
+.ha-monto {
+    font-size: 15px;
+    font-weight: 700;
+    transition: color .15s;
+}
+
+.ha-freq {
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+.ha-fechas {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+/* ===== Formulario de pago — tabla de conceptos ===== */
+
+/* Encabezado de columnas */
+.pago-tabla-head {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px 12px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 0 0 8px 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 4px;
+}
+.pago-tabla-head span:nth-child(2),
+.pago-tabla-head span:nth-child(3) {
+    text-align: right;
+    min-width: 90px;
+}
+
+/* Fila de un concepto */
+.pago-fila {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+}
+.pago-fila:last-of-type {
+    border-bottom: none;
+}
+.pago-fila-abono {
+    border-bottom: none;
+}
+
+/* Nombre del concepto */
+.pago-concepto {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+}
+.pago-concepto-multa  { color: var(--red); }
+.pago-concepto-atr    { color: #b47d3a; }
+.pago-nota-concepto {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+/* Monto adeudado */
+.pago-adeuda {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+    min-width: 80px;
+    white-space: nowrap;
+}
+.pago-adeuda-multa { color: var(--red); }
+.pago-adeuda-atr   { color: #b47d3a; }
+
+/* Contenedor del input + prefijo ₡ */
+.pago-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: 110px;
+    max-width: 130px;
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.pago-input-wrap .pre {
+    padding: 0 6px 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    background: none;
+}
+.pago-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: none;
+    padding: 7px 8px 7px 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+}
+.pago-input:focus {
+    outline: none;
+}
+.pago-input-wrap:focus-within {
+    border-color: var(--accent);
+}
+
+/* Nota de interés parcial */
+.pago-nota-parcial {
+    color: #b47d3a;
+    font-size: 12px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: #fef9f0;
+    border-radius: 7px;
+    border: 1px solid #e8c97a;
+}
+
 /* ===== Formulario de pago ===== */
 .pago-adelantado {
     background: #f4faf7;
@@ -1200,6 +1373,114 @@ a.btn-sin-icono {
     letter-spacing: -.5px;
 }
 
+/* ===== Dashboard accionable ===== */
+
+/* Contenedor centrado: se estrecha en pantallas grandes, ocupa todo en móvil */
+.dash-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Título "Atrasados" en rojo */
+.dash-title--late {
+    color: var(--red);
+}
+
+/* Badge de conteo junto al título (ej. "Atrasados ●3") */
+.dash-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--red);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    padding: 0 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+/* Panel con borde rojo suave para la lista de atrasados */
+.dash-panel--late {
+    border-color: #f0cfcd;
+}
+
+/* Fila de lista dentro de un panel (atrasados y por cobrar) */
+.dash-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+    text-decoration: none;
+    color: var(--text);
+}
+.dash-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.dash-row:hover .info b {
+    color: var(--accent-dark);
+}
+
+/* Info ocupa todo el espacio disponible → empuja el monto hasta la derecha */
+.dash-row .info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Avatar más compacto dentro de las filas del dashboard */
+.dash-row .av {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* Avatares con tinte según urgencia */
+.dash-av-late   { background: #fceaea; color: var(--red); }
+.dash-av-cobrar { background: #fff9ed; color: #b47d3a; }
+
+/* Monto alineado a la derecha */
+.dash-total {
+    text-align: right;
+    flex-shrink: 0;
+}
+.dash-total span {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.dash-total small {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 500;
+}
+.dash-total--late span   { color: var(--red); }
+.dash-total--cobrar span { color: #b47d3a; }
+
+/* Mensaje vacío dentro de panel */
+.dash-empty {
+    display: block;
+    color: var(--muted);
+    font-size: 13.5px;
+    text-align: center;
+    padding: 8px 0;
+    margin: 0;
+}
+
+/* Tarjetita de pagos: el valor puede ser texto largo (₡150.000),
+   se reduce el tamaño de fuente para que quepa bien */
+.stat--pago .val {
+    font-size: 20px;
+    letter-spacing: -.3px;
+}
+
 @media (max-width: 767.98px) {
     .cards.three {
         grid-template-columns: 1fr;
@@ -1248,5 +1529,24 @@ a.btn-sin-icono {
     }
     .cedula-grid {
         grid-template-columns: 1fr;
+    }
+    /* Tabla de conceptos del formulario de pago: columna nombre en full width,
+       monto y campo de pago en la segunda línea */
+    .pago-fila {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+    }
+    .pago-concepto {
+        grid-column: 1 / -1;
+    }
+    .pago-adeuda {
+        min-width: unset;
+        font-size: 12px;
+    }
+    .pago-input-wrap {
+        min-width: 90px;
+    }
+    .pago-tabla-head span:nth-child(1) {
+        display: none;
     }
 }

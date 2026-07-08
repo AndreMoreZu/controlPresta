@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['prestamo_id', 'fecha', 'monto', 'pagado'])]
+#[Fillable(['prestamo_id', 'fecha', 'monto', 'monto_pagado', 'pagado'])]
 class InteresAtrasado extends Model
 {
     protected $table = 'intereses_atrasados';
@@ -19,9 +19,10 @@ class InteresAtrasado extends Model
     protected function casts(): array
     {
         return [
-            'fecha' => 'date',
-            'monto' => 'integer',
-            'pagado' => 'boolean',
+            'fecha'       => 'date',
+            'monto'       => 'integer',
+            'monto_pagado' => 'integer',
+            'pagado'      => 'boolean',
         ];
     }
 

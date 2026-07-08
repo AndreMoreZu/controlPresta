@@ -3,6 +3,7 @@
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagoController;
+use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::patch('/clientes/{cliente}/desactivar', [ClienteController::class, 'desactivar'])->name('clientes.desactivar');
     Route::patch('/clientes/{cliente}/reactivar', [ClienteController::class, 'reactivar'])->name('clientes.reactivar');
+
+    Route::get('/clientes/{cliente}/prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show');
 
     Route::get('/clientes/{cliente}/pago',  [PagoController::class, 'create'])->name('pagos.create');
     Route::post('/clientes/{cliente}/pago', [PagoController::class, 'store'])->name('pagos.store');

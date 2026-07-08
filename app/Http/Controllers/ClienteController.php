@@ -43,7 +43,6 @@ class ClienteController extends Controller
 
     public function show(Cliente $cliente)
     {
-
         $cliente->load(['prestamos.pagos', 'prestamos.interesesAtrasados']);
 
         $prestamo = $cliente->prestamos
@@ -51,10 +50,21 @@ class ClienteController extends Controller
             ->sortByDesc('inicio')
             ->first();
 
+        if ($prestamo) {
+            $this->prestamoService->sincronizarAtraso($prestamo);
+            $prestamo->refresh();
+            $prestamo->load(['pagos', 'interesesAtrasados']);
+        }
+
+        $prestamosAnteriores = $cliente->prestamos
+            ->where('estado', 'saldado')
+            ->sortByDesc('inicio');
+
         return view('clientes.show', [
-            'cliente' => $cliente,
-            'prestamo' => $prestamo,
-            'service' => $this->prestamoService,
+            'cliente'             => $cliente,
+            'prestamo'            => $prestamo,
+            'service'             => $this->prestamoService,
+            'prestamosAnteriores' => $prestamosAnteriores,
         ]);
     }
 
@@ -73,9 +83,21 @@ class ClienteController extends Controller
             ->latest('inicio')
             ->first();
 
+        // Flags para inicializar los interruptores en edición.
+        // La vista solo recibe la decisión ya tomada; cero lógica en Blade.
+        $tienePrestamo = $prestamo !== null;
+        $estaAtrasado  = $tienePrestamo && (
+            $cliente->estado === 'atrasado'
+            || $prestamo->atraso_desde !== null
+            || $prestamo->dias_atraso > 0
+            || $prestamo->multa_acumulada > 0
+        );
+
         return view('clientes.edit', [
-            'cliente'  => $cliente,
-            'prestamo' => $prestamo,
+            'cliente'       => $cliente,
+            'prestamo'      => $prestamo,
+            'tienePrestamo' => $tienePrestamo,
+            'estaAtrasado'  => $estaAtrasado,
         ]);
     }
 
@@ -163,14 +185,16 @@ class ClienteController extends Controller
         $datos = $request->validated();
 
         $cliente = Cliente::create([
-            'nombre' => $datos['nombre'],
-            'apellidos' => $datos['apellidos'],
-            'telefono' => $datos['telefono'] ?? null,
-            'direccion' => $datos['direccion'] ?? null,
-            'trabajo' => $datos['trabajo'] ?? null,
-            'cedula' => $datos['cedula'] ?? null,
+            'nombre'             => $datos['nombre'],
+            'apellidos'          => $datos['apellidos'],
+            'telefono'           => $datos['telefono'] ?? null,
+            'direccion'          => $datos['direccion'] ?? null,
+            'trabajo'            => $datos['trabajo'] ?? null,
+            'cedula'             => $datos['cedula'] ?? null,
             'cedula_foto_frente' => $request->file('cedula_foto_frente')?->store('cedulas', 'public'),
-            'cedula_foto_atras' => $request->file('cedula_foto_atras')?->store('cedulas', 'public'),
+            'cedula_foto_atras'  => $request->file('cedula_foto_atras')?->store('cedulas', 'public'),
+            // Sin préstamo activo → sin-prestamo. crearDesdeMigracion lo sobreescribe si aplica.
+            'estado'             => 'sin-prestamo',
         ]);
 
         if ($request->boolean('tiene_prestamo')) {

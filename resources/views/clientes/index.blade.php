@@ -34,6 +34,8 @@
                 </div>
                 @if ($cliente->estado === 'atrasado')
                     <span class="tag late">Atrasado</span>
+                @elseif ($cliente->estado === 'sin-prestamo')
+                    <span class="tag none">Sin préstamo</span>
                 @else
                     <span class="tag ok">Al día</span>
                 @endif

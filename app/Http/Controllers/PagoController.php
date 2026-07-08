@@ -15,17 +15,30 @@ class PagoController extends Controller
         private PrestamoService $prestamoService,
     ) {}
 
+    /**
+     * Formulario de registro de pago.
+     *
+     * Pasa al formulario los montos exactos que debe el cliente hoy por cada concepto,
+     * para que los campos vengan precargados con el total (caso normal = confirmar y ya).
+     * cobrarInteres controla si se muestra la tabla de conceptos o el banner "adelantado".
+     */
     public function create(Cliente $cliente)
     {
         $prestamo = $this->prestamo($cliente);
         $prestamo->load('interesesAtrasados');
 
-        // Solo cobrar interés si ya llegó o pasó la fecha de cobro
-        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo);
+        // cobrarInteres = true si ya venció la fecha de cobro O si quedó interés
+        // pendiente de un pago parcial anterior (en ese caso proximo tampoco avanzó).
+        // cobrarInteres controla SOLO si el interés del período actual ya venció.
+        // Multa e intereses atrasados son deudas independientes: pueden existir
+        // aunque proximo esté en el futuro (caso borde §5.9).
+        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
+            || $prestamo->interes_pendiente > 0;
 
         $interes      = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
-        $multa        = $cobrarInteres ? $this->prestamoService->multaAcumulada($prestamo) : 0;
-        $interesesAtr = $cobrarInteres ? $this->prestamoService->interesesAtrasadosTotal($prestamo) : 0;
+        // Siempre calcular multa e intereses atrasados, independientemente de proximo.
+        $multa        = $this->prestamoService->multaAcumulada($prestamo);
+        $interesesAtr = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
         return view('pagos.create', [
             'cliente'       => $cliente,
@@ -34,10 +47,12 @@ class PagoController extends Controller
             'interes'       => $interes,
             'multa'         => $multa,
             'interesesAtr'  => $interesesAtr,
-            'minimo'        => $interes + $multa + $interesesAtr,
         ]);
     }
 
+    /**
+     * Procesa el pago y redirige a la ficha del cliente.
+     */
     public function store(StorePagoRequest $request, Cliente $cliente)
     {
         $prestamo = $this->prestamo($cliente);
@@ -53,6 +68,7 @@ class PagoController extends Controller
             ->with('status', 'Pago registrado correctamente.');
     }
 
+    /** Obtiene el préstamo activo del cliente o aborta con 404. */
     private function prestamo(Cliente $cliente): Prestamo
     {
         $prestamo = $cliente->prestamos()

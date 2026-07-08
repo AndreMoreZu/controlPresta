@@ -125,7 +125,28 @@ total_a_pagar = saldo (deuda) + intereses_atrasados + multa_acumulada
 Al saldar, todo queda en cero.
 
 ### 5.8 Estados del cliente
-`al-dia` o `atrasado`. Pasa a `al-dia` cuando se pone al día con el interés y los atrasos.
+`al-dia`, `atrasado` o `sin-prestamo`. Pasa a `al-dia` cuando se pone al día con el interés y los atrasos; `sin-prestamo` cuando no tiene ningún préstamo activo.
+
+### 5.9 Pagos parciales (versión simple)
+El prestamista puede cobrar de cada cuenta lo que el cliente pague, no está obligado a cobrar todo completo. En el formulario de pago, cada concepto (multa, interés del período, intereses atrasados) muestra cuánto se debe + un campo editable para cuánto se paga hoy. Los campos vienen precargados con el monto completo (el caso normal es rápido: confirmar y ya).
+
+Enfoque "guardar lo que falta" (NO créditos): al registrar el pago, de cada concepto se resta lo pagado y **queda guardado lo que falta** como el nuevo monto pendiente. Lo que no se pagó sigue debiéndose.
+
+Reglas clave:
+- **Interés del período:** si se paga COMPLETO → la fecha `proximo` avanza y el atraso termina. Si se paga PARCIAL → `proximo` NO avanza, el resto del interés sigue debiéndose, el cliente sigue atrasado.
+- **Multa:** mientras el cliente deba interés del período, la multa **sigue creciendo por día** (días × tarifa). Un pago parcial de multa resta lo pagado, pero al día siguiente vuelve a subir por el día nuevo. **Cuando paga el interés completo**, el atraso termina (`dias_atraso = 0`) y la multa **se detiene/congela** en el valor de ese día; si quedó multa sin pagar, ese resto sigue debiéndose pero ya NO crece.
+- **Intereses atrasados:** se pueden pagar parcial; lo que falta sigue debiéndose.
+- **Estado del cliente:** `al-dia` solo si no queda nada debiendo (ni interés del período, ni multa, ni intereses atrasados).
+
+### 5.10 Filosofía del sistema (decisión de diseño clave)
+El prestamista tiene **control total y manual** sobre los montos que cobra. El sistema NO bloquea, NO obliga a cobrar todo, NO pelea con las decisiones del dueño (él conoce a sus clientes, negocia, hace excepciones). Todos los campos de pago son editables manualmente.
+
+El rol del sistema es ser un **asistente que lleva las cuentas**, no un policía. En concreto, el sistema se encarga de:
+1. **Llevar el control de la plata** — saldos, cuánto se pagó de cada concepto, cuánto falta.
+2. **Alertar de los atrasos** — quién se atrasó y desde cuándo (vía el estado del cliente y las fechas de cobro).
+3. **Guardar los historiales** — registro completo de todos los pagos (fecha, desglose, método) y de los préstamos saldados.
+
+La única "regla automática" que el sistema aplica sin pedir permiso es el avance de la fecha de cobro: solo avanza cuando el interés del período se paga completo. Eso es lo que le permite al sistema saber, solo, si un cliente está al día o atrasado. Todo lo demás lo decide el dueño ingresando los montos.
 
 ---
 
