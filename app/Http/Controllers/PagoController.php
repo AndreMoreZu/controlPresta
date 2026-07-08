@@ -40,10 +40,11 @@ class PagoController extends Controller
         $multa        = $this->prestamoService->multaAcumulada($prestamo);
         $interesesAtr = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
-        // Fecha sugerida para el próximo cobro: solo aplica en Camino A (interés completo).
+        // Fecha sugerida para el próximo cobro: siempre desde HOY (nunca del proximo vencido).
+        // Así un atrasado profundo recibe una fecha futura, no una fecha pasada que fallaría validación.
         // Si el cliente paga parcial (Camino B), proximo no avanza y este valor se ignora.
         $proximoSugerido = $cobrarInteres
-            ? $this->pagoService->avanzarProximo($prestamo)->format('Y-m-d')
+            ? $this->pagoService->sugerirProximo($prestamo)->format('Y-m-d')
             : null;
 
         return view('pagos.create', [

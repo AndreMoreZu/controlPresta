@@ -368,6 +368,8 @@ class PagoService
 
     /**
      * Calcula la próxima fecha de cobro según la frecuencia del préstamo (§5.2).
+     * Parte de $prestamo->proximo (fecha actual). Usado en aplicarCaminoA() para
+     * el avance real tras un pago exitoso.
      * Delega a PrestamoService::avanzarFecha() — lógica centralizada allá.
      */
     public function avanzarProximo(Prestamo $prestamo): Carbon
@@ -377,5 +379,43 @@ class PagoService
             : Carbon::parse($prestamo->proximo);
 
         return $this->prestamoService->avanzarFecha($actual, $prestamo->frecuencia);
+    }
+
+    /**
+     * Sugiere la próxima fecha de cobro contando DESDE HOY (para el formulario de pago).
+     * Garantiza que la fecha sugerida sea siempre >= hoy, aunque proximo esté vencido.
+     *
+     * Reglas por frecuencia:
+     *   mensual   → hoy + 1 mes
+     *   semanal   → hoy + 7 días
+     *   quincenal → próxima fecha 15 o fin-de-mes desde hoy:
+     *                 hoy.day < 15        → el 15 de este mes
+     *                 hoy.day entre 15-30 → el min(30, último día) de este mes
+     *                 hoy.day > 30        → el 15 del mes siguiente
+     */
+    public function sugerirProximo(Prestamo $prestamo): Carbon
+    {
+        $hoy = today();
+
+        return match ($prestamo->frecuencia) {
+            'mensual'   => $hoy->copy()->addMonthNoOverflow(),
+            'semanal'   => $hoy->copy()->addDays(7),
+            'quincenal' => $this->proximoQuincenalDesdeHoy($hoy),
+            default     => $hoy->copy()->addMonthNoOverflow(),
+        };
+    }
+
+    private function proximoQuincenalDesdeHoy(Carbon $hoy): Carbon
+    {
+        if ($hoy->day < 15) {
+            return $hoy->copy()->setDay(15);
+        }
+
+        if ($hoy->day <= 30) {
+            return $hoy->copy()->setDay(min(30, $hoy->daysInMonth));
+        }
+
+        // día 31: la fecha "30" ya pasó este mes, ir al 15 del siguiente
+        return $hoy->copy()->addMonthNoOverflow()->setDay(15);
     }
 }
