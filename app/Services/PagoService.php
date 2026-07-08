@@ -308,9 +308,9 @@ class PagoService
         $multaMax     = $this->prestamoService->multaAcumulada($prestamo);
         $atrasadosMax = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
-        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
-            || $prestamo->interes_pendiente > 0;
-        $interesMax    = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
+        // El dueño decide cuánto cobrar de interés al saldar (puede ser 0 o el período completo).
+        // Max = lo que computó el servicio para este período, independientemente de si ya venció.
+        $interesMax = $this->prestamoService->interesPeriodo($prestamo);
 
         // Clampear al máximo de cada concepto para no registrar más de lo que se debe.
         $interesPagado    = min((int) ($datos['pago_interes']       ?? $interesMax),    $interesMax);

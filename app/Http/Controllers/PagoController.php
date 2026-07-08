@@ -87,10 +87,13 @@ class PagoController extends Controller
         $prestamo = $this->prestamo($cliente);
         $prestamo->load('interesesAtrasados');
 
+        // cobrarInteres: controla la etiqueta "(pendiente)" en el blade, no oculta la fila.
         $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
             || $prestamo->interes_pendiente > 0;
 
-        $interes   = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
+        // Siempre calcular el interés del período para que el dueño pueda cobrarlo al saldar,
+        // incluso si el cliente está al día (salda anticipado).
+        $interes   = $this->prestamoService->interesPeriodo($prestamo);
         $multa     = $this->prestamoService->multaAcumulada($prestamo);
         $atrasados = $this->prestamoService->interesesAtrasadosTotal($prestamo);
         $total     = $prestamo->saldo + $interes + $atrasados + $multa;

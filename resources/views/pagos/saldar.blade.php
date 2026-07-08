@@ -35,82 +35,72 @@
                     </span>
                 </div>
 
-                {{-- Interés del período: editable, solo si ya venció --}}
-                @if ($cobrarInteres)
-                    <div class="pago-fila">
-                        <span class="pago-concepto">
-                            Interés del período
-                            @if ($prestamo->interes_pendiente > 0)
-                                <small class="pago-nota-concepto">(pendiente)</small>
-                            @endif
-                        </span>
-                        <span class="pago-adeuda">{{ colones($interes) }}</span>
-                        <div class="pago-input-wrap">
-                            <span class="pre">₡</span>
-                            <input type="text"
-                                   id="disp-interes"
-                                   class="pago-input concepto-input"
-                                   inputmode="numeric"
-                                   autocomplete="off"
-                                   data-max="{{ $interes }}"
-                                   value="{{ number_format(old('pago_interes', $interes), 0, '.', '.') }}">
-                            <input type="hidden"
-                                   name="pago_interes"
-                                   id="pago_interes"
-                                   value="{{ old('pago_interes', $interes) }}">
-                        </div>
+                {{-- Interés del período: SIEMPRE visible --}}
+                {{-- default = interesPeriodo() calculado; ₡0 si no hay interés acumulado. --}}
+                {{-- El dueño puede editarlo para cobrar el período al saldar anticipado.   --}}
+                <div class="pago-fila">
+                    <span class="pago-concepto">
+                        Interés del período
+                        @if ($prestamo->interes_pendiente > 0)
+                            <small class="pago-nota-concepto">(pendiente)</small>
+                        @endif
+                    </span>
+                    <span class="pago-adeuda">{{ colones($interes) }}</span>
+                    <div class="pago-input-wrap">
+                        <span class="pre">₡</span>
+                        <input type="text"
+                               id="disp-interes"
+                               class="pago-input concepto-input"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-max="{{ $interes }}"
+                               value="{{ number_format(old('pago_interes', $interes), 0, '.', '.') }}">
+                        <input type="hidden"
+                               name="pago_interes"
+                               id="pago_interes"
+                               value="{{ old('pago_interes', $interes) }}">
                     </div>
-                @else
-                    <input type="hidden" name="pago_interes" value="0">
-                @endif
+                </div>
 
-                {{-- Intereses atrasados: editable --}}
-                @if ($atrasados > 0)
-                    <div class="pago-fila">
-                        <span class="pago-concepto pago-concepto-atr">Intereses atrasados</span>
-                        <span class="pago-adeuda pago-adeuda-atr">{{ colones($atrasados) }}</span>
-                        <div class="pago-input-wrap">
-                            <span class="pre">₡</span>
-                            <input type="text"
-                                   id="disp-intereses-atr"
-                                   class="pago-input concepto-input"
-                                   inputmode="numeric"
-                                   autocomplete="off"
-                                   data-max="{{ $atrasados }}"
-                                   value="{{ number_format(old('pago_intereses_atr', $atrasados), 0, '.', '.') }}">
-                            <input type="hidden"
-                                   name="pago_intereses_atr"
-                                   id="pago_intereses_atr"
-                                   value="{{ old('pago_intereses_atr', $atrasados) }}">
-                        </div>
+                {{-- Intereses atrasados: SIEMPRE visible (₡0 si no hay) --}}
+                <div class="pago-fila">
+                    <span class="pago-concepto pago-concepto-atr">Intereses atrasados</span>
+                    <span class="pago-adeuda pago-adeuda-atr">{{ colones($atrasados) }}</span>
+                    <div class="pago-input-wrap">
+                        <span class="pre">₡</span>
+                        <input type="text"
+                               id="disp-intereses-atr"
+                               class="pago-input concepto-input"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-max="{{ $atrasados }}"
+                               value="{{ number_format(old('pago_intereses_atr', $atrasados), 0, '.', '.') }}">
+                        <input type="hidden"
+                               name="pago_intereses_atr"
+                               id="pago_intereses_atr"
+                               value="{{ old('pago_intereses_atr', $atrasados) }}">
                     </div>
-                @else
-                    <input type="hidden" name="pago_intereses_atr" value="0">
-                @endif
+                </div>
 
-                {{-- Multa: editable --}}
-                @if ($multa > 0)
-                    <div class="pago-fila">
-                        <span class="pago-concepto pago-concepto-multa">Multa por atraso</span>
-                        <span class="pago-adeuda pago-adeuda-multa">{{ colones($multa) }}</span>
-                        <div class="pago-input-wrap">
-                            <span class="pre">₡</span>
-                            <input type="text"
-                                   id="disp-multa"
-                                   class="pago-input concepto-input"
-                                   inputmode="numeric"
-                                   autocomplete="off"
-                                   data-max="{{ $multa }}"
-                                   value="{{ number_format(old('pago_multa', $multa), 0, '.', '.') }}">
-                            <input type="hidden"
-                                   name="pago_multa"
-                                   id="pago_multa"
-                                   value="{{ old('pago_multa', $multa) }}">
-                        </div>
+                {{-- Multa: SIEMPRE visible (₡0 si no hay) --}}
+                <div class="pago-fila">
+                    <span class="pago-concepto pago-concepto-multa">Multa por atraso</span>
+                    <span class="pago-adeuda pago-adeuda-multa">{{ colones($multa) }}</span>
+                    <div class="pago-input-wrap">
+                        <span class="pre">₡</span>
+                        <input type="text"
+                               id="disp-multa"
+                               class="pago-input concepto-input"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-max="{{ $multa }}"
+                               value="{{ number_format(old('pago_multa', $multa), 0, '.', '.') }}">
+                        <input type="hidden"
+                               name="pago_multa"
+                               id="pago_multa"
+                               value="{{ old('pago_multa', $multa) }}">
                     </div>
-                @else
-                    <input type="hidden" name="pago_multa" value="0">
-                @endif
+                </div>
             </div>
 
             {{-- Total en vivo --}}
