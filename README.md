@@ -97,9 +97,9 @@ interes = round(base * tasa)     // siempre entero
 
 ### 5.5 Multa por atraso (se acumula por día)
 ```
-monto <= 50.000   → ₡2.000/día
-monto <= 150.000  → ₡3.000/día
-monto >  150.000  → ₡5.000/día
+monto <  100.000  → ₡2.000/día   (ej. 50k, 80k, 99k)
+monto de 100.000 a 149.999 → ₡3.000/día
+monto >= 150.000  → ₡5.000/día
 multa = tarifa * dias_atraso
 ```
 **Cuándo empieza:** la multa arranca el **día siguiente** a la fecha de cobro (pasada la medianoche de ese día). El día de cobro NO cuenta como atraso.

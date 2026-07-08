@@ -271,7 +271,7 @@ class ClientesPruebaSeeder extends Seeder
      *   - intereses_atrasados(hace ~1 mes) = ₡40.000 (generado por el motor)
      *   Total: 1 registro en intereses_atrasados.
      *
-     * multa dinámica: ~61 días × ₡3.000/día ≈ ₡183.000 (varía con la fecha real).
+     * multa dinámica: ~61 días × ₡5.000/día ≈ ₡305.000 (varía con la fecha real; monto 200k >= 150k → tarifa 5.000).
      *
      * PRUEBA DE IDEMPOTENCIA:
      *   SELECT fecha, COUNT(*) FROM intereses_atrasados

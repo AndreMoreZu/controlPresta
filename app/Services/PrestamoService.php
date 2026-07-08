@@ -17,10 +17,11 @@ class PrestamoService
     ];
 
     // Tarifa de multa por día según el monto del préstamo (§5.5).
-    // Clave = tope inclusivo; por encima del último tope se usa TARIFA_MULTA_DEFAULT.
+    // Clave = tope inclusivo (<=); por encima del último tope → TARIFA_MULTA_DEFAULT.
+    // Tramos: monto < 100k → 2.000/día | 100k–149.999 → 3.000/día | ≥ 150k → 5.000/día
     private const TARIFAS_MULTA = [
-        50000  => 2000,
-        150000 => 3000,
+        99999  => 2000,
+        149999 => 3000,
     ];
 
     private const TARIFA_MULTA_DEFAULT = 5000;
@@ -62,7 +63,8 @@ class PrestamoService
 
     // ── Multa por atraso ──────────────────────────────────────────────────────
 
-    /** Tarifa diaria de multa según el monto original del préstamo (§5.5). */
+    /** Tarifa diaria de multa según el monto original del préstamo (§5.5).
+     *  < 100k → 2.000 | 100k–149.999 → 3.000 | ≥ 150k → 5.000 */
     public function multaPorDia(int $monto): int
     {
         foreach (self::TARIFAS_MULTA as $tope => $tarifa) {
