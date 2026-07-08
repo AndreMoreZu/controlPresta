@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/clientes/{cliente}/reactivar', [ClienteController::class, 'reactivar'])->name('clientes.reactivar');
 
     Route::get('/clientes/{cliente}/prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show');
+    Route::get('/clientes/{cliente}/nuevo-prestamo',       [PrestamoController::class, 'create'])->name('prestamos.create');
+    Route::post('/clientes/{cliente}/nuevo-prestamo',      [PrestamoController::class, 'store'])->name('prestamos.store');
 
     Route::get('/clientes/{cliente}/pago',  [PagoController::class, 'create'])->name('pagos.create');
     Route::post('/clientes/{cliente}/pago', [PagoController::class, 'store'])->name('pagos.store');

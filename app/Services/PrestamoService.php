@@ -348,6 +348,29 @@ class PrestamoService
         }
     }
 
+    // ── Nuevo préstamo (cliente existente) ───────────────────────────────────
+
+    /**
+     * Crea un nuevo préstamo para un cliente que no tiene uno activo.
+     * El préstamo anterior (si existe) debe estar en estado 'saldado'; no lo toca.
+     * Pone al cliente en 'al-dia'.
+     */
+    public function crear(Cliente $cliente, array $datos): Prestamo
+    {
+        $prestamo = $cliente->prestamos()->create([
+            'monto'      => (int) $datos['monto'],
+            'saldo'      => (int) $datos['monto'],
+            'frecuencia' => $datos['frecuencia'],
+            'inicio'     => $datos['inicio'],
+            'proximo'    => $datos['proximo'],
+            'estado'     => 'activo',
+        ]);
+
+        $cliente->update(['estado' => 'al-dia']);
+
+        return $prestamo;
+    }
+
     // ── Operaciones de migración manual (§8 del README) ──────────────────────
 
     /**

@@ -33,17 +33,28 @@
         @endif
 
         @if ($cliente->activo)
+            @php
+                $puedeRegistrarPago    = $prestamo && $prestamo->saldo > 0;
+                $puedeNuevoPrestamo    = !$puedeRegistrarPago;
+            @endphp
             <div class="actions-main">
-                @if ($prestamo && $prestamo->saldo > 0)
+                @if ($puedeRegistrarPago)
                     <a href="{{ route('pagos.create', $cliente) }}" class="btn-sin-icono">Registrar pago</a>
                 @else
                     <button type="button" class="btn-sin-icono" disabled>Registrar pago</button>
                 @endif
-                <button type="button" class="btn-sin-icono" disabled>Nuevo préstamo</button>
+
+                @if ($puedeNuevoPrestamo)
+                    <a href="{{ route('prestamos.create', $cliente) }}" class="btn-sin-icono">Nuevo préstamo</a>
+                @else
+                    <button type="button" class="btn-sin-icono" disabled>Nuevo préstamo</button>
+                @endif
             </div>
-            @unless ($prestamo && $prestamo->saldo > 0)
+            @if (!$puedeRegistrarPago && !$puedeNuevoPrestamo)
+                <div class="note-locked">Ambas opciones estarán disponibles cuando el saldo llegue a ₡0.</div>
+            @elseif (!$puedeRegistrarPago)
                 <div class="note-locked">Registrar pago estará disponible cuando haya un préstamo activo con saldo.</div>
-            @endunless
+            @endif
         @endif
 
         @if ($prestamo)
