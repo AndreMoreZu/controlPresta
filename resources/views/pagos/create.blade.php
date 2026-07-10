@@ -12,160 +12,110 @@
         <form method="POST" action="{{ route('pagos.store', $cliente) }}">
             @csrf
 
-            {{--
-                Mostrar la tabla de cobro si hay CUALQUIER concepto pendiente:
-                  - cobrarInteres: venció proximo O hay interés parcial pendiente
-                  - multa > 0: hay multa acumulada (independiente de proximo)
-                  - interesesAtr > 0: hay intereses atrasados (independiente de proximo)
-                Caso borde §5.9: proximo en el futuro pero multa/atrasados pendientes
-                → se muestra la tabla SIN la fila de interés del período.
-            --}}
-            @if ($cobrarInteres || $multa > 0 || $interesesAtr > 0)
-                <div class="panel" style="margin-bottom: 14px;">
-                    <h3>Desglose del cobro
-                        <span class="sub">Editá cada campo si el cliente paga parcial</span>
-                    </h3>
+            {{-- ── Desglose del cobro: siempre visible ─────────────────────────── --}}
+            <div class="panel" style="margin-bottom: 14px;">
+                <h3>Desglose del cobro
+                    <span class="sub">Editá los montos si hace falta</span>
+                </h3>
 
-                    {{-- Encabezado de la tabla --}}
-                    <div class="pago-tabla-head">
-                        <span>Concepto</span>
-                        <span>Adeuda</span>
-                        <span>Paga hoy</span>
-                    </div>
-
-                    {{-- ── Interés del período: solo si ya venció proximo ───────── --}}
-                    @if ($cobrarInteres)
-                        <div class="pago-fila" id="fila-interes">
-                            <span class="pago-concepto">
-                                Interés del período
-                                @if ($prestamo->interes_pendiente > 0)
-                                    <small class="pago-nota-concepto">(pendiente)</small>
-                                @endif
-                            </span>
-                            <span class="pago-adeuda">{{ colones($interes) }}</span>
-                            <div class="pago-input-wrap">
-                                <span class="pre">₡</span>
-                                <input type="text"
-                                       id="disp-interes"
-                                       class="pago-input concepto-input"
-                                       inputmode="numeric"
-                                       autocomplete="off"
-                                       data-max="{{ $interes }}"
-                                       value="{{ number_format(old('pago_interes', $interes), 0, '.', '.') }}">
-                                <input type="hidden"
-                                       name="pago_interes"
-                                       id="pago_interes"
-                                       value="{{ old('pago_interes', $interes) }}">
-                            </div>
-                        </div>
-                        <x-input-error :messages="$errors->get('pago_interes')" class="field-error" />
-                    @else
-                        {{-- proximo en el futuro: interés del período = 0 --}}
-                        <input type="hidden" name="pago_interes" value="0">
-                    @endif
-
-                    {{-- ── Multa por atraso (si hay) ───────────────────────────── --}}
-                    @if ($multa > 0)
-                        <div class="pago-fila">
-                            <span class="pago-concepto pago-concepto-multa">Multa por atraso</span>
-                            <span class="pago-adeuda pago-adeuda-multa">{{ colones($multa) }}</span>
-                            <div class="pago-input-wrap">
-                                <span class="pre">₡</span>
-                                <input type="text"
-                                       id="disp-multa"
-                                       class="pago-input concepto-input"
-                                       inputmode="numeric"
-                                       autocomplete="off"
-                                       data-max="{{ $multa }}"
-                                       value="{{ number_format(old('pago_multa', $multa), 0, '.', '.') }}">
-                                <input type="hidden"
-                                       name="pago_multa"
-                                       id="pago_multa"
-                                       value="{{ old('pago_multa', $multa) }}">
-                            </div>
-                        </div>
-                        <x-input-error :messages="$errors->get('pago_multa')" class="field-error" />
-                    @else
-                        <input type="hidden" name="pago_multa" value="0">
-                    @endif
-
-                    {{-- ── Intereses atrasados (si hay) ────────────────────────── --}}
-                    @if ($interesesAtr > 0)
-                        <div class="pago-fila">
-                            <span class="pago-concepto pago-concepto-atr">Intereses atrasados</span>
-                            <span class="pago-adeuda pago-adeuda-atr">{{ colones($interesesAtr) }}</span>
-                            <div class="pago-input-wrap">
-                                <span class="pre">₡</span>
-                                <input type="text"
-                                       id="disp-intereses-atr"
-                                       class="pago-input concepto-input"
-                                       inputmode="numeric"
-                                       autocomplete="off"
-                                       data-max="{{ $interesesAtr }}"
-                                       value="{{ number_format(old('pago_intereses_atr', $interesesAtr), 0, '.', '.') }}">
-                                <input type="hidden"
-                                       name="pago_intereses_atr"
-                                       id="pago_intereses_atr"
-                                       value="{{ old('pago_intereses_atr', $interesesAtr) }}">
-                            </div>
-                        </div>
-                        <x-input-error :messages="$errors->get('pago_intereses_atr')" class="field-error" />
-                    @else
-                        <input type="hidden" name="pago_intereses_atr" value="0">
-                    @endif
-
-                    {{-- Nota: interés parcial no avanza la fecha (solo visible si cobrarInteres) --}}
-                    <p id="nota-interes-parcial" class="form-note pago-nota-parcial" style="display:none;">
-                        Si el interés queda incompleto, la fecha de cobro no avanza
-                        ({{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}).
-                    </p>
+                <div class="pago-tabla-head">
+                    <span>Concepto</span>
+                    <span>Adeuda</span>
+                    <span>Paga hoy</span>
                 </div>
 
-            @else
-                {{-- ── Verdaderamente al día: nada que cobrar ─────────────────── --}}
-                {{-- Solo llega aquí si cobrarInteres=false Y multa=0 Y atrasados=0 --}}
-                <div class="pago-adelantado">
-                    <strong>Este cliente ya está al día</strong>
-                    Su próximo interés se cobra el {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}.
-                    Solo podés registrar un abono al capital si el cliente quiere adelantar pago de deuda.
-                </div>
-                <input type="hidden" name="pago_interes"       value="0">
-                <input type="hidden" name="pago_multa"         value="0">
-                <input type="hidden" name="pago_intereses_atr" value="0">
-            @endif
-
-            {{-- ── Próximo cobro (solo en Camino A: cuando hay interés del período) ── --}}
-            {{-- Solo se aplica si el interés queda COMPLETO. Si queda parcial       --}}
-            {{-- (Camino B), proximo no avanza y esta fecha se ignora.               --}}
-            @if ($cobrarInteres)
-                <div class="panel" style="margin-bottom: 14px;">
-                    <h3>Fecha del próximo cobro
-                        <span class="sub">Se aplica solo si el interés queda completo</span>
-                    </h3>
-                    <div class="form-field" style="margin: 0;">
-                        <div class="ctrl">
-                            <input type="date"
-                                   id="proximo_cobro"
-                                   name="proximo_cobro"
-                                   value="{{ old('proximo_cobro', $proximoSugerido) }}">
-                        </div>
-                        <x-input-error :messages="$errors->get('proximo_cobro')" class="field-error" />
-                        <p class="form-note" style="margin-top: 6px;">
-                            Si el interés queda incompleto (pago parcial), esta fecha no se usa
-                            y el cobro se mantiene en {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}.
-                        </p>
+                {{-- Interés del período: SIEMPRE visible y editable --}}
+                <div class="pago-fila" id="fila-interes">
+                    <span class="pago-concepto">Interés del período</span>
+                    <span class="pago-adeuda">{{ colones($interes) }}</span>
+                    <div class="pago-input-wrap">
+                        <span class="pre">₡</span>
+                        <input type="text"
+                               id="disp-interes"
+                               class="pago-input concepto-input"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-max="{{ $interes }}"
+                               value="{{ number_format(old('pago_interes', $interes), 0, '.', '.') }}">
+                        <input type="hidden"
+                               name="pago_interes"
+                               id="pago_interes"
+                               value="{{ old('pago_interes', $interes) }}">
                     </div>
                 </div>
-            @else
-                <input type="hidden" name="proximo_cobro" value="">
-            @endif
+                <x-input-error :messages="$errors->get('pago_interes')" class="field-error" />
+
+                {{-- Multa por atraso (si hay) --}}
+                @if ($multa > 0)
+                    <div class="pago-fila">
+                        <span class="pago-concepto pago-concepto-multa">Multa por atraso</span>
+                        <span class="pago-adeuda pago-adeuda-multa">{{ colones($multa) }}</span>
+                        <div class="pago-input-wrap">
+                            <span class="pre">₡</span>
+                            <input type="text"
+                                   id="disp-multa"
+                                   class="pago-input concepto-input"
+                                   inputmode="numeric"
+                                   autocomplete="off"
+                                   data-max="{{ $multa }}"
+                                   value="{{ number_format(old('pago_multa', $multa), 0, '.', '.') }}">
+                            <input type="hidden"
+                                   name="pago_multa"
+                                   id="pago_multa"
+                                   value="{{ old('pago_multa', $multa) }}">
+                        </div>
+                    </div>
+                    <x-input-error :messages="$errors->get('pago_multa')" class="field-error" />
+                @else
+                    <input type="hidden" name="pago_multa" value="0">
+                @endif
+
+                {{-- Intereses atrasados (si hay) --}}
+                @if ($interesesAtr > 0)
+                    <div class="pago-fila">
+                        <span class="pago-concepto pago-concepto-atr">Intereses atrasados</span>
+                        <span class="pago-adeuda pago-adeuda-atr">{{ colones($interesesAtr) }}</span>
+                        <div class="pago-input-wrap">
+                            <span class="pre">₡</span>
+                            <input type="text"
+                                   id="disp-intereses-atr"
+                                   class="pago-input concepto-input"
+                                   inputmode="numeric"
+                                   autocomplete="off"
+                                   data-max="{{ $interesesAtr }}"
+                                   value="{{ number_format(old('pago_intereses_atr', $interesesAtr), 0, '.', '.') }}">
+                            <input type="hidden"
+                                   name="pago_intereses_atr"
+                                   id="pago_intereses_atr"
+                                   value="{{ old('pago_intereses_atr', $interesesAtr) }}">
+                        </div>
+                    </div>
+                    <x-input-error :messages="$errors->get('pago_intereses_atr')" class="field-error" />
+                @else
+                    <input type="hidden" name="pago_intereses_atr" value="0">
+                @endif
+            </div>
+
+            {{-- ── Fecha del próximo cobro: siempre visible ─────────────────────── --}}
+            <div class="panel" style="margin-bottom: 14px;">
+                <h3>Fecha del próximo cobro
+                    <span class="sub">La que acordaron con el cliente</span>
+                </h3>
+                <div class="form-field" style="margin: 0;">
+                    <div class="ctrl">
+                        <input type="date"
+                               id="proximo_cobro"
+                               name="proximo_cobro"
+                               value="{{ old('proximo_cobro', $proximoSugerido) }}">
+                    </div>
+                    <x-input-error :messages="$errors->get('proximo_cobro')" class="field-error" />
+                </div>
+            </div>
 
             {{-- ── Abono al capital (siempre visible) ──────────────────────────── --}}
             <div class="panel" style="margin-bottom: 14px;">
                 <h3>Abono al capital
-                    <span class="sub">
-                        {{ $cobrarInteres ? 'Opcional — baja la deuda' : 'Opcional — adelanto sobre la deuda' }}
-                    </span>
+                    <span class="sub">Opcional — baja la deuda</span>
                 </h3>
                 <div class="pago-fila pago-fila-abono">
                     <span class="pago-concepto">Abono</span>
@@ -195,7 +145,6 @@
                 <div class="pago-total-row">
                     <span class="pago-currency">₡</span>
                     <span id="total-display" class="pago-total-num">
-                        {{-- Valor inicial: suma de todos los conceptos precargados --}}
                         {{ number_format($interes + $multa + $interesesAtr, 0, '.', '.') }}
                     </span>
                 </div>
@@ -245,20 +194,17 @@
         }
 
         // ── Vincular cada campo visible con su hidden ─────────────────────────
-        // Cada input[type=text] tiene data-max = tope máximo y un hidden hermano.
         document.querySelectorAll('.concepto-input').forEach(function (disp) {
             const max    = parseInt(disp.dataset.max, 10) || 0;
-            // El input hidden está justo después del input visible en el DOM.
             const hidden = disp.nextElementSibling;
 
             disp.addEventListener('input', function () {
-                const raw    = this.value.replace(/\D/g, '');
-                const num    = parseInt(raw, 10) || 0;
-                // Clampear al máximo en el cliente (el service también lo hace).
-                const val    = Math.min(num, max);
-                const cursor = this.selectionStart;
-                const antes  = this.value.length;
-                this.value   = formatear(val) || (num === 0 ? '' : formatear(val));
+                const raw     = this.value.replace(/\D/g, '');
+                const num     = parseInt(raw, 10) || 0;
+                const val     = Math.min(num, max);
+                const cursor  = this.selectionStart;
+                const antes   = this.value.length;
+                this.value    = formatear(val) || (num === 0 ? '' : formatear(val));
                 const despues = this.value.length;
                 this.setSelectionRange(
                     Math.max(0, cursor + (despues - antes)),
@@ -266,7 +212,6 @@
                 );
                 hidden.value = val;
                 recalcularTotal();
-                mostrarNotaInteresParcial();
             });
         });
 
@@ -274,23 +219,27 @@
         function recalcularTotal() {
             var total = 0;
             document.querySelectorAll('input[type="hidden"][name^="pago_"], input[type="hidden"][name="abono"]')
-                .forEach(function (h) {
-                    total += parsear(h.value);
-                });
+                .forEach(function (h) { total += parsear(h.value); });
             document.getElementById('total-display').textContent =
                 total > 0 ? total.toLocaleString('es-CR') : '0';
         }
 
-        // ── Nota de interés parcial ───────────────────────────────────────────
-        // Se muestra cuando el campo de interés queda por debajo del total adeudado.
-        var notaElem = document.getElementById('nota-interes-parcial');
-        var dispInteres = document.getElementById('disp-interes');
-
-        function mostrarNotaInteresParcial() {
-            if (!notaElem || !dispInteres) return;
-            var val = parsear(dispInteres.value);
-            notaElem.style.display = (val < interesMax && interesMax > 0) ? '' : 'none';
-        }
+        // ── Alerta si el interés cobrado es menor al del período ──────────────
+        // El período se cierra siempre (no existe Camino B). El dueño confirma.
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const ingresado = parsear(document.getElementById('pago_interes').value);
+            if (interesMax > 0 && ingresado < interesMax) {
+                const fmtIng = ingresado.toLocaleString('es-CR');
+                const fmtMax = interesMax.toLocaleString('es-CR');
+                const ok = confirm(
+                    'Estás cobrando ₡' + fmtIng + ' de interés, ' +
+                    'pero el interés del período es ₡' + fmtMax + '.\n' +
+                    'El período se dará por cerrado y el cliente quedará al día.\n' +
+                    '¿Continuar?'
+                );
+                if (!ok) { e.preventDefault(); }
+            }
+        });
 
         // ── Radio buttons de método ───────────────────────────────────────────
         document.querySelectorAll('.freq-opt input[type="radio"]').forEach(function (radio) {
@@ -302,9 +251,7 @@
             });
         });
 
-        // ── Inicializar total ─────────────────────────────────────────────────
         recalcularTotal();
-        mostrarNotaInteresParcial();
     })();
     </script>
 </x-app-layout>

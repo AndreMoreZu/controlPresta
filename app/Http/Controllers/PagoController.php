@@ -18,43 +18,29 @@ class PagoController extends Controller
     /**
      * Formulario de registro de pago.
      *
-     * Pasa al formulario los montos exactos que debe el cliente hoy por cada concepto,
-     * para que los campos vengan precargados con el total (caso normal = confirmar y ya).
-     * cobrarInteres controla si se muestra la tabla de conceptos o el banner "adelantado".
+     * El interés del período siempre se muestra y precarga con el monto calculado.
+     * El dueño edita lo que quiera; si cobra menos del interés calculado, el JS pide
+     * confirmación antes de enviar (el período se cierra igual — no existe Camino B).
      */
     public function create(Cliente $cliente)
     {
         $prestamo = $this->prestamo($cliente);
         $prestamo->load('interesesAtrasados');
 
-        // cobrarInteres = true si ya venció la fecha de cobro O si quedó interés
-        // pendiente de un pago parcial anterior (en ese caso proximo tampoco avanzó).
-        // cobrarInteres controla SOLO si el interés del período actual ya venció.
-        // Multa e intereses atrasados son deudas independientes: pueden existir
-        // aunque proximo esté en el futuro (caso borde §5.9).
-        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
-            || $prestamo->interes_pendiente > 0;
-
-        $interes      = $cobrarInteres ? $this->prestamoService->interesPeriodo($prestamo) : 0;
-        // Siempre calcular multa e intereses atrasados, independientemente de proximo.
+        $interes      = $this->prestamoService->interesPeriodo($prestamo);
         $multa        = $this->prestamoService->multaAcumulada($prestamo);
         $interesesAtr = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
-        // Fecha sugerida para el próximo cobro: siempre desde HOY (nunca del proximo vencido).
-        // Así un atrasado profundo recibe una fecha futura, no una fecha pasada que fallaría validación.
-        // Si el cliente paga parcial (Camino B), proximo no avanza y este valor se ignora.
-        $proximoSugerido = $cobrarInteres
-            ? $this->pagoService->sugerirProximo($prestamo)->format('Y-m-d')
-            : null;
+        // Sugerir próxima fecha siempre desde HOY (nunca del proximo vencido).
+        $proximoSugerido = $this->pagoService->sugerirProximo($prestamo)->format('Y-m-d');
 
         return view('pagos.create', [
-            'cliente'          => $cliente,
-            'prestamo'         => $prestamo,
-            'cobrarInteres'    => $cobrarInteres,
-            'interes'          => $interes,
-            'multa'            => $multa,
-            'interesesAtr'     => $interesesAtr,
-            'proximoSugerido'  => $proximoSugerido,
+            'cliente'         => $cliente,
+            'prestamo'        => $prestamo,
+            'interes'         => $interes,
+            'multa'           => $multa,
+            'interesesAtr'    => $interesesAtr,
+            'proximoSugerido' => $proximoSugerido,
         ]);
     }
 
