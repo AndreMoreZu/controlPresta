@@ -122,33 +122,36 @@ Cada interés atrasado se guarda en una lista con su fecha. Se pueden pagar desp
 ```
 total_a_pagar = saldo (deuda) + interés del período pendiente + intereses_atrasados + multa_acumulada
 ```
-El interés del período solo se incluye si ya venció (`proximo <= hoy` o `interes_pendiente > 0`).
+El interés del período siempre se incluye en el desglose (el operador decide si lo cobra o lo pone en 0).
 El desglose es editable por concepto (el operador puede ajustar cada monto).
 Al saldar, todo queda en cero.
 
 ### 5.8 Estados del cliente
 `al-dia`, `atrasado` o `sin-prestamo`. Pasa a `al-dia` cuando se pone al día con el interés y los atrasos; `sin-prestamo` cuando no tiene ningún préstamo activo.
 
-### 5.9 Pagos parciales (versión simple)
-El prestamista puede cobrar de cada cuenta lo que el cliente pague, no está obligado a cobrar todo completo. En el formulario de pago, cada concepto (multa, interés del período, intereses atrasados) muestra cuánto se debe + un campo editable para cuánto se paga hoy. Los campos vienen precargados con el monto completo (el caso normal es rápido: confirmar y ya).
+### 5.9 Pagos parciales
+El formulario de pago muestra cada concepto con cuánto se debe y un campo editable para cuánto se paga hoy. Los campos vienen precargados con el monto completo (el caso normal es rápido: confirmar y ya).
 
-Enfoque "guardar lo que falta" (NO créditos): al registrar el pago, de cada concepto se resta lo pagado y **queda guardado lo que falta** como el nuevo monto pendiente. Lo que no se pagó sigue debiéndose.
-
-Reglas clave:
-- **Interés del período:** si se paga COMPLETO → la fecha `proximo` avanza y el atraso termina. Si se paga PARCIAL → `proximo` NO avanza, el resto del interés sigue debiéndose, el cliente sigue atrasado.
-- **Multa:** mientras el cliente deba interés del período, la multa **sigue creciendo por día** (días × tarifa). Un pago parcial de multa resta lo pagado, pero al día siguiente vuelve a subir por el día nuevo. **Cuando paga el interés completo**, el atraso termina (`dias_atraso = 0`) y la multa **se detiene/congela** en el valor de ese día; si quedó multa sin pagar, ese resto sigue debiéndose pero ya NO crece.
+Reglas por concepto:
+- **Interés del período:** siempre visible y editable. El campo viene precargado con `interesPeriodo()`. El dueño puede modificarlo; si cobra menos del calculado, el sistema muestra una alerta de confirmación ("El período se dará por cerrado — ¿continuar?") pero **no bloquea**. El período se cierra siempre, independientemente del monto cobrado. No existe pago parcial de interés que deje el período abierto (no existe Camino B).
+- **Multa:** **sigue creciendo por día** mientras el cliente tenga atraso (`atraso_desde` activo). El operador puede cobrar parcial; lo que no se cobra ese día se sigue debiendo. Cuando el interés del período se registra (y el período se cierra), el atraso termina y la multa **se detiene/congela** en el resto que quedó sin pagar; ese resto sigue debiéndose pero ya NO crece.
 - **Intereses atrasados:** se pueden pagar parcial; lo que falta sigue debiéndose.
-- **Estado del cliente:** `al-dia` solo si no queda nada debiendo (ni interés del período, ni multa, ni intereses atrasados).
+- **Estado del cliente:** `al-dia` solo si no queda multa ni intereses atrasados pendientes.
 
 ### 5.10 Filosofía del sistema (decisión de diseño clave)
-El prestamista tiene **control total y manual** sobre los montos que cobra. El sistema NO bloquea, NO obliga a cobrar todo, NO pelea con las decisiones del dueño (él conoce a sus clientes, negocia, hace excepciones). Todos los campos de pago son editables manualmente.
+El sistema es un **cuaderno ordenado con cálculos automáticos**, no un policía financiero. El dueño tiene control total sobre lo que cobra; el sistema sugiere, avisa, pero no bloquea.
 
-El rol del sistema es ser un **asistente que lleva las cuentas**, no un policía. En concreto, el sistema se encarga de:
-1. **Llevar el control de la plata** — saldos, cuánto se pagó de cada concepto, cuánto falta.
-2. **Alertar de los atrasos** — quién se atrasó y desde cuándo (vía el estado del cliente y las fechas de cobro).
-3. **Guardar los historiales** — registro completo de todos los pagos (fecha, desglose, método) y de los préstamos saldados.
+Los únicos cálculos automáticos son:
+- Interés según frecuencia (20 % mensual / 15 % quincenal / 5 % semanal), con recálculo único a la mitad del saldo.
+- Conteo de días de atraso (`atraso_desde` → `dias_atraso`).
+- Multa por tramos según días de atraso.
+- Generación de intereses atrasados al superar un período completo sin pagar.
 
-La única "regla automática" que el sistema aplica sin pedir permiso es el avance de la fecha de cobro: solo avanza cuando el interés del período se paga completo. Eso es lo que le permite al sistema saber, solo, si un cliente está al día o atrasado. Todo lo demás lo decide el dueño ingresando los montos.
+Todo monto que se registra en un pago **lo escribe el dueño**. El sistema precarga los campos con los valores calculados, pero no impide editarlos.
+
+El interés del período es la ganancia del negocio: siempre se cobra completo. Si el dueño registra un monto menor al calculado, el sistema muestra una alerta de confirmación pero **no bloquea** — el período se cierra igual y el sistema avanza `proximo`. No existe "interés pendiente de período" ni Camino B.
+
+La multa y los intereses atrasados sí admiten pago parcial: lo que no se cobra ese día sigue debiéndose exactamente igual.
 
 ---
 
