@@ -9,7 +9,7 @@
     </a>
 
     <div class="form-container" style="max-width: 520px;">
-        <form method="POST" action="{{ route('pagos.store', $cliente) }}">
+        <form id="form-pago" method="POST" action="{{ route('pagos.store', $cliente) }}">
             @csrf
 
             {{-- ── Desglose del cobro: siempre visible ─────────────────────────── --}}
@@ -226,8 +226,8 @@
 
         // ── Alerta si el interés cobrado es menor al del período ──────────────
         // El período se cierra siempre (no existe Camino B). El dueño confirma.
-        document.querySelector('form').addEventListener('submit', function (e) {
-            const ingresado = parsear(document.getElementById('pago_interes').value);
+        document.getElementById('form-pago').addEventListener('submit', function (e) {
+            const ingresado = parseInt(document.getElementById('disp-interes').value.replace(/\D/g, ''), 10) || 0;
             if (interesMax > 0 && ingresado < interesMax) {
                 const fmtIng = ingresado.toLocaleString('es-CR');
                 const fmtMax = interesMax.toLocaleString('es-CR');
