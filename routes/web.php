@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -33,6 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/clientes/{cliente}/prestamos/{prestamo}', [PrestamoController::class, 'show'])->name('prestamos.show');
     Route::get('/clientes/{cliente}/nuevo-prestamo',       [PrestamoController::class, 'create'])->name('prestamos.create');
     Route::post('/clientes/{cliente}/nuevo-prestamo',      [PrestamoController::class, 'store'])->name('prestamos.store');
+
+    Route::get('/usuarios',        [UserController::class, 'index'])->name('usuarios.index');
+    Route::get('/usuarios/nuevo',  [UserController::class, 'create'])->name('usuarios.create');
+    Route::post('/usuarios',       [UserController::class, 'store'])->name('usuarios.store');
+    Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('usuarios.destroy');
 
     Route::get('/pagos',                                                [PagoController::class, 'index'])->name('pagos.index');
     Route::get('/clientes/{cliente}/pago',    [PagoController::class, 'create'])->name('pagos.create');

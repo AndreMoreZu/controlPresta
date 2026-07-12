@@ -9,6 +9,7 @@
     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Panel</a>
     <a href="{{ route('clientes.index') }}" class="{{ request()->routeIs('clientes.*') ? 'active' : '' }}">Clientes</a>
     <a href="{{ route('pagos.index') }}" class="{{ request()->routeIs('pagos.index') ? 'active' : '' }}">Historial</a>
+    <a href="{{ route('usuarios.index') }}" class="{{ request()->routeIs('usuarios.*') ? 'active' : '' }}">Usuarios</a>
 </nav>
 <div class="side-foot">
     <div class="avd">{{ Str::upper(Str::substr(auth()->user()->name, 0, 1)) }}</div>

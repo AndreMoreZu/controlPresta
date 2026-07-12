@@ -35,6 +35,9 @@
                 @if (session('status'))
                     <div class="flash-ok">{{ session('status') }}</div>
                 @endif
+                @if (session('error'))
+                    <div class="flash-err">{{ session('error') }}</div>
+                @endif
                 {{ $slot }}
             </div>
         </div>
