@@ -1767,7 +1767,7 @@ a.btn-sin-icono {
 .user-row:last-child { border-bottom: none; }
 .user-info { flex: 1; min-width: 0; }
 .user-info b { display: block; font-size: 15px; }
-.user-email { font-size: 12.5px; color: var(--muted); }
+.user-email { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn-del-user {
     flex-shrink: 0;
     padding: 5px 12px;
@@ -1782,3 +1782,97 @@ a.btn-sin-icono {
 }
 .btn-del-user:hover:not(:disabled) { background: var(--red); color: #fff; }
 .btn-del-user:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════════
+   CLASES FALTANTES / CORRECCIONES BASE
+═══════════════════════════════════════════════════════ */
+
+/* Botón primario ancho completo (saldar cuenta) */
+.btn-primary-full {
+    width: 100%;
+    border: 0;
+    background: var(--accent);
+    color: var(--white);
+    font-weight: 700;
+    font-family: var(--font);
+    font-size: 15px;
+    padding: 13px;
+    border-radius: 13px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: filter 0.15s;
+}
+.btn-primary-full:hover { filter: brightness(0.9); color: var(--white); }
+
+/* Botón con apariencia de enlace (verificación de email en perfil) */
+.btn-link {
+    border: 0;
+    background: transparent;
+    color: var(--green);
+    font-size: inherit;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+}
+.btn-link:hover { color: var(--green-dark); }
+
+/* historial en ficha: .h-l puede encoger sin desbordarse */
+.hist-row .h-l { min-width: 0; overflow: hidden; }
+.hist-row .h-l span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — stats 2 columnas entre 480 y 767px
+═══════════════════════════════════════════════════════ */
+@media (min-width: 480px) and (max-width: 767.98px) {
+    .cards.five,
+    .cards.four,
+    .cards.three {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — ajustes adicionales ≤767px
+═══════════════════════════════════════════════════════ */
+@media (max-width: 767.98px) {
+    /* Dashboard: la línea de deuda puede ser larga */
+    .dash-row .info .debt {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11.5px;
+    }
+    /* Stat: reducir fuente para que quepan colones largos en 1 línea */
+    .stat .val       { font-size: 22px; }
+    .stat--pago .val { font-size: 16px; }
+    /* Ficha: nombre largo necesita word-break */
+    .ficha-hero h2   { font-size: 17px; word-break: break-word; }
+    .big-av          { width: 50px; height: 50px; font-size: 18px; }
+    /* Total del pago: fuente más chica */
+    .pago-total-num  { font-size: 26px; }
+    /* Historial global: quitar margen lateral extra */
+    .hist-totales-bar { margin: 10px 0 0; }
+    /* Intereses atrasados: monto a la derecha al wrappear */
+    .interes-row     { flex-wrap: wrap; }
+    .interes-row .im { margin-left: auto; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — móvil estrecho ≤479px
+═══════════════════════════════════════════════════════ */
+@media (max-width: 479px) {
+    .desk-content    { padding: 10px; }
+    .panel           { padding: 11px; }
+    .ficha-body      { padding: 11px 12px; }
+    .ficha-hero      { padding: 15px 13px; gap: 10px; }
+    .kv              { font-size: 13px; gap: 4px 8px; }
+    /* el campo de fecha de historial no necesita separador visual */
+    .hist-date-sep   { display: none; }
+    .hist-date-input { flex: 1 1 130px; }
+    /* la línea de chips se puede comprimir más */
+    .chip            { font-size: 11.5px; padding: 6px 10px; }
+    /* botón "Nuevo usuario" / "Nuevo cliente" */
+    .btn-new         { font-size: 13.5px; }
+}
