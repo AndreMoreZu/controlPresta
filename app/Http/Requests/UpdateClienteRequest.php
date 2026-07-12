@@ -25,8 +25,8 @@ class UpdateClienteRequest extends FormRequest
             'direccion'           => ['nullable', 'string', 'max:255'],
             'trabajo'             => ['nullable', 'string', 'max:255'],
             'cedula'              => ['nullable', 'string', 'max:50', Rule::unique('clientes', 'cedula')->ignore($clienteId)],
-            'cedula_foto_frente'  => ['nullable', 'image', 'max:4096'],
-            'cedula_foto_atras'   => ['nullable', 'image', 'max:4096'],
+            'cedula_foto_frente'  => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'cedula_foto_atras'   => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
 
             'tiene_prestamo'      => ['nullable', 'boolean'],
             'monto'               => ['required_if:tiene_prestamo,1', 'nullable', 'integer', 'min:1', 'max:' . self::MAX_MONTO],
