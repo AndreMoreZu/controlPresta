@@ -1558,3 +1558,188 @@ a.btn-sin-icono {
         display: none;
     }
 }
+
+/* ===== Historial global de pagos (/pagos) ===== */
+
+/* Fila de fecha range en los filtros */
+.hist-date-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.hist-date-input {
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--input-bg, #fff);
+    color: var(--text);
+    min-width: 120px;
+    flex: 1;
+}
+.hist-date-sep {
+    color: var(--muted);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.hist-btn-filtrar {
+    padding: 6px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.hist-btn-filtrar:hover { background: var(--accent-dark); }
+.hist-btn-limpiar {
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.hist-btn-limpiar:hover { color: var(--text); border-color: var(--text); }
+
+/* Barra de totales filtrados */
+.hist-totales-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 10px 16px 0;
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+.ht-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 14px;
+    gap: 1px;
+    flex: 1;
+    min-width: 80px;
+}
+.ht-stat:first-child { padding-left: 0; }
+.ht-sep {
+    width: 1px;
+    height: 32px;
+    background: var(--line);
+    flex-shrink: 0;
+}
+.ht-val {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.ht-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* Panel contenedor de la lista */
+.gh-panel {
+    padding: 0 14px;
+    margin-top: 10px;
+}
+
+/* Ítem individual de la lista */
+.gh-item {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line-soft);
+}
+.gh-item:last-child { border-bottom: none; }
+
+/* Línea superior: fecha + cliente + badge + total */
+.gh-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+.gh-fecha {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.gh-cliente {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-dark);
+    text-decoration: none;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gh-cliente:hover { text-decoration: underline; }
+.gh-cliente--vacio { color: var(--muted); }
+.gh-total {
+    font-weight: 700;
+    font-size: 14.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* Badge "Saldado" */
+.tag-saldo {
+    background: #e8f0fe;
+    color: #1a56db;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Línea inferior: desglose de conceptos */
+.gh-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+    padding-left: 0;
+}
+.gh-split span::before { content: '· '; }
+.gh-split span:first-child::before { content: ''; }
+.gh-int    { color: var(--accent-dark); font-weight: 600; }
+.gh-multa  { color: var(--red); }
+.gh-atr    { color: #b47d3a; }
+.gh-metodo { color: var(--muted); font-style: italic; }
+
+/* Paginación */
+.gh-paginacion {
+    padding: 14px 16px 20px;
+}
+.gh-paginacion .pagination {
+    margin: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 520px) {
+    .hist-date-row { gap: 4px; }
+    .hist-date-input { min-width: 100px; font-size: 12px; }
+    .hist-totales-bar { padding: 8px 10px; gap: 0; }
+    .ht-stat { padding: 0 8px; min-width: 60px; }
+    .ht-val { font-size: 13px; }
+    .gh-fecha { display: none; }
+    .gh-total { font-size: 13.5px; }
+}

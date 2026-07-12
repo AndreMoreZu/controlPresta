@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/clientes/{cliente}/nuevo-prestamo',       [PrestamoController::class, 'create'])->name('prestamos.create');
     Route::post('/clientes/{cliente}/nuevo-prestamo',      [PrestamoController::class, 'store'])->name('prestamos.store');
 
+    Route::get('/pagos',                                                [PagoController::class, 'index'])->name('pagos.index');
     Route::get('/clientes/{cliente}/pago',    [PagoController::class, 'create'])->name('pagos.create');
     Route::post('/clientes/{cliente}/pago',   [PagoController::class, 'store'])->name('pagos.store');
     Route::get('/clientes/{cliente}/saldar',  [PagoController::class, 'saldoCreate'])->name('pagos.saldar');

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePagoRequest;
 use App\Models\Cliente;
+use App\Models\Pago;
 use App\Models\Prestamo;
 use App\Services\PagoService;
 use App\Services\PrestamoService;
+use Illuminate\Http\Request;
 
 class PagoController extends Controller
 {
@@ -14,6 +16,48 @@ class PagoController extends Controller
         private PagoService $pagoService,
         private PrestamoService $prestamoService,
     ) {}
+
+    public function index(Request $request)
+    {
+        $busqueda = trim($request->query('q', ''));
+        $metodo   = $request->query('metodo', '');
+        $desde    = $request->query('desde', '');
+        $hasta    = $request->query('hasta', '');
+
+        $totales = $this->queryPagos($busqueda, $metodo, $desde, $hasta)
+            ->selectRaw('
+                COUNT(*)                                  AS cantidad,
+                COALESCE(SUM(monto_total), 0)             AS monto_total,
+                COALESCE(SUM(interes), 0)                 AS interes,
+                COALESCE(SUM(abono), 0)                   AS abono,
+                COALESCE(SUM(interes_atrasado_pagado), 0) AS interes_atrasado_pagado,
+                COALESCE(SUM(multa_pagada), 0)            AS multa_pagada
+            ')
+            ->first();
+
+        $pagos = $this->queryPagos($busqueda, $metodo, $desde, $hasta)
+            ->with('prestamo.cliente')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('pagos.index', compact('pagos', 'totales', 'busqueda', 'metodo', 'desde', 'hasta'));
+    }
+
+    private function queryPagos(string $busqueda, string $metodo, string $desde, string $hasta)
+    {
+        return Pago::query()
+            ->when($busqueda, fn($q) =>
+                $q->whereHas('prestamo.cliente', fn($c) =>
+                    $c->where('nombre',    'like', "%{$busqueda}%")
+                      ->orWhere('apellidos', 'like', "%{$busqueda}%")
+                )
+            )
+            ->when($metodo, fn($q) => $q->where('metodo', $metodo))
+            ->when($desde,  fn($q) => $q->whereDate('fecha', '>=', $desde))
+            ->when($hasta,  fn($q) => $q->whereDate('fecha', '<=', $hasta));
+    }
 
     /**
      * Formulario de registro de pago.
