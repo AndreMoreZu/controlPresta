@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/cedulas/{filename}', [ClienteController::class, 'servirCedula'])->name('cedulas.serve');
+
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/clientes/nuevo', [ClienteController::class, 'create'])->name('clientes.create');
     Route::get('/clientes/inactivos', [ClienteController::class, 'inactivos'])->name('clientes.inactivos');

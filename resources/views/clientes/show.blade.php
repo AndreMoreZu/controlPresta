@@ -159,7 +159,7 @@
                 @foreach (['Frente' => $cliente->cedula_foto_frente, 'Atrás' => $cliente->cedula_foto_atras] as $lado => $foto)
                     <div class="cedula">
                         @if ($foto)
-                            <img src="{{ asset('storage/'.$foto) }}" alt="{{ $lado }} de la cédula">
+                            <img src="{{ route('cedulas.serve', ['filename' => basename($foto)]) }}" alt="{{ $lado }} de la cédula">
                             <div class="cap">{{ $lado }}</div>
                         @else
                             <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">

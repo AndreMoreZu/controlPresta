@@ -120,16 +120,16 @@ class ClienteController extends Controller
 
         if ($request->hasFile('cedula_foto_frente')) {
             if ($fotoFrente) {
-                Storage::disk('public')->delete($fotoFrente);
+                Storage::delete($fotoFrente);
             }
-            $fotoFrente = $request->file('cedula_foto_frente')->store('cedulas', 'public');
+            $fotoFrente = $request->file('cedula_foto_frente')->store('cedulas');
         }
 
         if ($request->hasFile('cedula_foto_atras')) {
             if ($fotoAtras) {
-                Storage::disk('public')->delete($fotoAtras);
+                Storage::delete($fotoAtras);
             }
-            $fotoAtras = $request->file('cedula_foto_atras')->store('cedulas', 'public');
+            $fotoAtras = $request->file('cedula_foto_atras')->store('cedulas');
         }
 
         $cliente->update([
@@ -201,8 +201,8 @@ class ClienteController extends Controller
             'direccion'          => $datos['direccion'] ?? null,
             'trabajo'            => $datos['trabajo'] ?? null,
             'cedula'             => $datos['cedula'] ?? null,
-            'cedula_foto_frente' => $request->file('cedula_foto_frente')?->store('cedulas', 'public'),
-            'cedula_foto_atras'  => $request->file('cedula_foto_atras')?->store('cedulas', 'public'),
+            'cedula_foto_frente' => $request->file('cedula_foto_frente')?->store('cedulas'),
+            'cedula_foto_atras'  => $request->file('cedula_foto_atras')?->store('cedulas'),
             // Sin préstamo activo → sin-prestamo. crearDesdeMigracion lo sobreescribe si aplica.
             'estado'             => 'sin-prestamo',
         ]);
@@ -214,5 +214,17 @@ class ClienteController extends Controller
         return redirect()
             ->route('clientes.show', $cliente)
             ->with('status', 'Cliente creado correctamente.');
+    }
+
+    /**
+     * Sirve una foto de cédula desde el disco privado.
+     * Solo accesible a usuarios autenticados (middleware auth en la ruta).
+     * basename() previene path traversal.
+     */
+    public function servirCedula(string $filename): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $path = 'cedulas/' . basename($filename);
+        abort_unless(Storage::exists($path), 404);
+        return response()->file(Storage::path($path));
     }
 }
