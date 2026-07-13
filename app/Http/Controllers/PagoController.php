@@ -78,10 +78,15 @@ class PagoController extends Controller
         // Mostrar la fecha ya guardada en el préstamo (el dueño la edita si el cliente acordó otra).
         $proximoSugerido = $prestamo->proximo->format('Y-m-d');
 
+        // El interés solo se precarga cuando ya le toca pagar (llegó o pasó la fecha de cobro).
+        $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
+            || $prestamo->interes_pendiente > 0;
+
         return view('pagos.create', [
             'cliente'         => $cliente,
             'prestamo'        => $prestamo,
             'interes'         => $interes,
+            'cobrarInteres'   => $cobrarInteres,
             'multa'           => $multa,
             'interesesAtr'    => $interesesAtr,
             'proximoSugerido' => $proximoSugerido,

@@ -25,6 +25,7 @@
                 </div>
 
                 {{-- Interés del período: SIEMPRE visible y editable --}}
+                @php $interesPrecargado = $cobrarInteres ? $interes : 0; @endphp
                 <div class="pago-fila" id="fila-interes">
                     <span class="pago-concepto">Interés del período</span>
                     <span class="pago-adeuda">{{ colones($interes) }}</span>
@@ -36,11 +37,11 @@
                                inputmode="numeric"
                                autocomplete="off"
                                data-max="{{ $interes }}"
-                               value="{{ number_format(old('pago_interes', $interes), 0, '.', '.') }}">
+                               value="{{ number_format(old('pago_interes', $interesPrecargado), 0, '.', '.') }}">
                         <input type="hidden"
                                name="pago_interes"
                                id="pago_interes"
-                               value="{{ old('pago_interes', $interes) }}">
+                               value="{{ old('pago_interes', $interesPrecargado) }}">
                     </div>
                 </div>
                 <x-input-error :messages="$errors->get('pago_interes')" class="field-error" />
@@ -145,7 +146,7 @@
                 <div class="pago-total-row">
                     <span class="pago-currency">₡</span>
                     <span id="total-display" class="pago-total-num">
-                        {{ number_format($interes + $multa + $interesesAtr, 0, '.', '.') }}
+                        {{ number_format($interesPrecargado + $multa + $interesesAtr, 0, '.', '.') }}
                     </span>
                 </div>
             </div>
@@ -182,7 +183,8 @@
 
     <script>
     (function () {
-        const interesMax = {{ $interes }};
+        const interesMax    = {{ $interes }};
+        const cobrarInteres = {{ $cobrarInteres ? 'true' : 'false' }};
 
         // ── Utilidades ────────────────────────────────────────────────────────
         function parsear(v) {
@@ -225,10 +227,10 @@
         }
 
         // ── Alerta si el interés cobrado es menor al del período ──────────────
-        // El período se cierra siempre (no existe Camino B). El dueño confirma.
+        // Solo cuando le toca cobrar interés ese día. El período se cierra igual.
         document.getElementById('form-pago').addEventListener('submit', function (e) {
             const ingresado = parseInt(document.getElementById('disp-interes').value.replace(/\D/g, ''), 10) || 0;
-            if (interesMax > 0 && ingresado < interesMax) {
+            if (cobrarInteres && interesMax > 0 && ingresado < interesMax) {
                 const fmtIng = ingresado.toLocaleString('es-CR');
                 const fmtMax = interesMax.toLocaleString('es-CR');
                 const ok = confirm(
