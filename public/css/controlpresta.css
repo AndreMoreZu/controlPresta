@@ -1124,6 +1124,16 @@ a.btn-ghost-sm {
     border-color: var(--muted);
     color: var(--muted);
 }
+/* Chip "× Ver todos" — aparece cuando hay búsqueda o filtro activo */
+.chip-limpiar {
+    border-color: var(--green);
+    color: var(--green);
+    font-weight: 600;
+}
+.chip-limpiar:hover {
+    background: var(--green);
+    color: var(--white);
+}
 
 /* Advertencia de deuda en el modal de desactivar */
 .warn-deuda {
