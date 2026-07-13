@@ -75,8 +75,8 @@ class PagoController extends Controller
         $multa        = $this->prestamoService->multaAcumulada($prestamo);
         $interesesAtr = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
-        // Sugerir próxima fecha siempre desde HOY (nunca del proximo vencido).
-        $proximoSugerido = $this->pagoService->sugerirProximo($prestamo)->format('Y-m-d');
+        // Mostrar la fecha ya guardada en el préstamo (el dueño la edita si el cliente acordó otra).
+        $proximoSugerido = $prestamo->proximo->format('Y-m-d');
 
         return view('pagos.create', [
             'cliente'         => $cliente,
