@@ -1124,13 +1124,13 @@ a.btn-ghost-sm {
     border-color: var(--muted);
     color: var(--muted);
 }
-/* Chip "× Ver todos" — aparece cuando hay búsqueda o filtro activo */
-.chip-limpiar {
+/* Chip "↻ Refrescar" — limpia búsqueda y filtros, siempre visible */
+.chip-refrescar {
     border-color: var(--green);
     color: var(--green);
     font-weight: 600;
 }
-.chip-limpiar:hover {
+.chip-refrescar:hover {
     background: var(--green);
     color: var(--white);
 }

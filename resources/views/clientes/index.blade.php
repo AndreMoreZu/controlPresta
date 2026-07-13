@@ -16,9 +16,7 @@
             <a href="{{ route('clientes.index', ['q' => $busqueda, 'filter' => 'al-dia']) }}" class="chip {{ $filtroActivo === 'al-dia' ? 'on' : '' }}">Al día</a>
             <a href="{{ route('clientes.index', ['q' => $busqueda, 'filter' => 'atrasado']) }}" class="chip {{ $filtroActivo === 'atrasado' ? 'on' : '' }}">Atrasados</a>
             <a href="{{ route('clientes.inactivos') }}" class="chip chip-inactivos">Inactivos</a>
-            @if ($busqueda !== '' || $filtroActivo !== 'todos')
-                <a href="{{ route('clientes.index') }}" class="chip chip-limpiar">× Ver todos</a>
-            @endif
+            <a href="{{ route('clientes.index') }}" class="chip chip-refrescar">↻ Refrescar</a>
         </div>
         <a href="{{ route('clientes.create') }}" class="btn-new">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
