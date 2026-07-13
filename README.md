@@ -412,6 +412,18 @@ php artisan migrate:fresh --seed        # recrea todo y siembra datos
 php artisan serve                       # arranca el servidor local
 ```
 
+**Seeders:**
+```bash
+# Local (datos de prueba — clientes, préstamos, pagos de ejemplo):
+php artisan migrate:fresh --seed
+
+# Producción (limpio — solo crea el usuario provisional de primer acceso):
+php artisan migrate --force
+php artisan db:seed --class=ProduccionSeeder --force
+```
+> Tras el primer acceso en producción: entrá con `acceso@controlpresta.com / CambiarEsto2026!`,
+> creá los usuarios reales en `/usuarios` y eliminá el usuario provisional.
+
 ---
 
 ## 13. Acuerdo comercial (resumen)
