@@ -107,7 +107,7 @@
                         <input type="date"
                                id="proximo_cobro"
                                name="proximo_cobro"
-                               value="{{ old('proximo_cobro', $proximoSugerido) }}">
+                               value="{{ old('proximo_cobro', $proximoActual) }}">
                     </div>
                     <x-input-error :messages="$errors->get('proximo_cobro')" class="field-error" />
                 </div>
@@ -183,8 +183,10 @@
 
     <script>
     (function () {
-        const interesMax    = {{ $interes }};
-        const cobrarInteres = {{ $cobrarInteres ? 'true' : 'false' }};
+        const interesMax      = {{ $interes }};
+        const cobrarInteres   = {{ $cobrarInteres ? 'true' : 'false' }};
+        const proximoActual   = '{{ $proximoActual }}';
+        const proximoSiguiente = '{{ $proximoSiguiente }}';
 
         // ── Utilidades ────────────────────────────────────────────────────────
         function parsear(v) {
@@ -193,6 +195,23 @@
 
         function formatear(n) {
             return n > 0 ? n.toLocaleString('es-CR') : '';
+        }
+
+        // ── Fecha del próximo cobro: se actualiza según si se cierra el ciclo ─
+        // Alterna entre la fecha guardada y la siguiente solo si el usuario
+        // no ha editado el campo a mano; en ese caso se respeta su valor.
+        const campoFecha = document.getElementById('proximo_cobro');
+        let settingDate    = false;
+        let userEditedDate = false;
+
+        campoFecha.addEventListener('input',  function () { if (!settingDate) userEditedDate = true; });
+        campoFecha.addEventListener('change', function () { if (!settingDate) userEditedDate = true; });
+
+        function actualizarFecha(interesIngresado) {
+            if (userEditedDate) return;
+            settingDate = true;
+            campoFecha.value = interesIngresado >= interesMax ? proximoSiguiente : proximoActual;
+            settingDate = false;
         }
 
         // ── Vincular cada campo visible con su hidden ─────────────────────────
@@ -214,6 +233,7 @@
                 );
                 hidden.value = val;
                 recalcularTotal();
+                if (disp.id === 'disp-interes') actualizarFecha(val);
             });
         });
 

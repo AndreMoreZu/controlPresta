@@ -75,21 +75,24 @@ class PagoController extends Controller
         $multa        = $this->prestamoService->multaAcumulada($prestamo);
         $interesesAtr = $this->prestamoService->interesesAtrasadosTotal($prestamo);
 
-        // Mostrar la fecha ya guardada en el préstamo (el dueño la edita si el cliente acordó otra).
-        $proximoSugerido = $prestamo->proximo->format('Y-m-d');
-
         // El interés solo se precarga cuando ya le toca pagar (llegó o pasó la fecha de cobro).
         $cobrarInteres = today()->greaterThanOrEqualTo($prestamo->proximo)
             || $prestamo->interes_pendiente > 0;
 
+        // Fecha actual guardada en el préstamo (se muestra si no cierra el ciclo).
+        // Siguiente fecha (proximo + 1 período) para sugerir si paga el interés completo.
+        $proximoActual    = $prestamo->proximo->format('Y-m-d');
+        $proximoSiguiente = $this->pagoService->avanzarProximo($prestamo)->format('Y-m-d');
+
         return view('pagos.create', [
-            'cliente'         => $cliente,
-            'prestamo'        => $prestamo,
-            'interes'         => $interes,
-            'cobrarInteres'   => $cobrarInteres,
-            'multa'           => $multa,
-            'interesesAtr'    => $interesesAtr,
-            'proximoSugerido' => $proximoSugerido,
+            'cliente'          => $cliente,
+            'prestamo'         => $prestamo,
+            'interes'          => $interes,
+            'cobrarInteres'    => $cobrarInteres,
+            'multa'            => $multa,
+            'interesesAtr'     => $interesesAtr,
+            'proximoActual'    => $proximoActual,
+            'proximoSiguiente' => $proximoSiguiente,
         ]);
     }
 
