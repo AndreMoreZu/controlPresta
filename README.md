@@ -80,15 +80,19 @@ Todos los usuarios tienen **acceso total** (mismas opciones y permisos). No hay 
 
 **Día de cobro:** lo acuerdan con cada cliente y se ingresa como fecha. Las fechas siguientes se calculan sumando el período (mensual +1 mes, quincenal +15 días, semanal +7 días / miércoles). Como referencia, lo típico es mensual/quincenal el 15 y el 30, y semanal los miércoles.
 
-### 5.3 Cálculo del interés (recálculo ÚNICO a la mitad)
-El interés es el % sobre el monto, pero se recalcula **una sola vez** cuando la deuda llega a la **mitad del préstamo original**; de ahí en adelante queda **fijo** sobre esa mitad.
+### 5.3 Cálculo del interés (recálculo ÚNICO a la mitad, solo ≥ ₡200.000)
+El recálculo a la mitad aplica **únicamente a préstamos de ₡200.000 o más**. Para préstamos menores, el interés se calcula siempre sobre el saldo real.
 
 ```
-base    = (saldo > monto/2) ? monto : (monto/2)
+si monto >= 200.000:
+    base = (saldo > monto/2) ? monto : (monto/2)
+si monto < 200.000:
+    base = saldo
 interes = round(base * tasa)     // siempre entero
 ```
 **Ejemplo ₡400.000 mensual (20%):** ₡80.000 → al llegar a ₡200.000 baja a ₡40.000 → de ahí abajo se queda fijo en ₡40.000.
 **Ejemplo ₡200.000 mensual (20%):** ₡40.000 → al llegar a ₡100.000 baja a ₡20.000 → fijo en ₡20.000.
+**Ejemplo ₡50.000 mensual (20%):** siempre sobre saldo real → si el saldo es ₡30.000, el interés es ₡6.000 (no ₡5.000).
 
 ### 5.4 Interés vs. abono al registrar un pago
 - **Interés:** obligatorio cada período. Se paga para estar al día. NO baja la deuda.

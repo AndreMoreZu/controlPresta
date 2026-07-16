@@ -40,8 +40,10 @@ class PrestamoService
      * devuelve ese monto restante en vez de recalcular: el cliente todavía debe la diferencia
      * del período que no cerró, y proximo no ha avanzado.
      *
-     * Fórmula normal: base = monto si saldo > monto/2, o monto/2 si saldo <= monto/2.
-     * El recálculo a la mitad ocurre una sola vez y queda fijo de ahí en adelante.
+     * Fórmula normal (§5.3):
+     *   - Préstamos >= ₡200.000: base = monto original mientras saldo > monto/2;
+     *     una vez que baja a la mitad o menos, base = monto/2 (fijo de ahí en adelante).
+     *   - Préstamos < ₡200.000: base = saldo real siempre (sin recálculo a la mitad).
      */
     public function interesPeriodo(Prestamo $prestamo): int
     {
@@ -56,7 +58,11 @@ class PrestamoService
         }
 
         $mitad = $prestamo->monto / 2;
-        $base  = $prestamo->saldo > $mitad ? $prestamo->monto : $mitad;
+        if ($prestamo->monto >= 200000) {
+            $base = $prestamo->saldo > $mitad ? $prestamo->monto : $mitad;
+        } else {
+            $base = $prestamo->saldo;
+        }
 
         return (int) round($base * $this->tasa($prestamo));
     }
