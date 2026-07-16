@@ -70,8 +70,9 @@
                 @endif
                 <div class="kv">
                     <span class="k">Próximo pago</span>
-                    <span class="v {{ $prestamo->vencido ? 'due' : '' }}">
-                        {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}{{ $prestamo->vencido ? ' · vencido' : '' }}
+                    @php $proxVencido = $prestamo->proximo?->lessThan(today()); @endphp
+                    <span class="v {{ $proxVencido ? 'due' : '' }}">
+                        {{ $prestamo->proximo?->format('d/m/Y') ?? '—' }}{{ $proxVencido ? ' · vencido' : '' }}
                     </span>
                 </div>
                 <div class="kv"><span class="k">Fecha en que se prestó</span><span class="v">{{ $prestamo->inicio?->format('d/m/Y') ?? '—' }}</span></div>
