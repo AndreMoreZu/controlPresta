@@ -41,9 +41,10 @@ class PrestamoService
      * del período que no cerró, y proximo no ha avanzado.
      *
      * Fórmula normal (§5.3):
+     *   - Préstamos < ₡200.000: base = monto original siempre (los abonos bajan la
+     *     deuda pero el interés se cobra sobre lo prestado originalmente).
      *   - Préstamos >= ₡200.000: base = monto original mientras saldo > monto/2;
      *     una vez que baja a la mitad o menos, base = monto/2 (fijo de ahí en adelante).
-     *   - Préstamos < ₡200.000: base = saldo real siempre (sin recálculo a la mitad).
      */
     public function interesPeriodo(Prestamo $prestamo): int
     {
@@ -61,7 +62,7 @@ class PrestamoService
         if ($prestamo->monto >= 200000) {
             $base = $prestamo->saldo > $mitad ? $prestamo->monto : $mitad;
         } else {
-            $base = $prestamo->saldo;
+            $base = $prestamo->monto;
         }
 
         return (int) round($base * $this->tasa($prestamo));
@@ -340,8 +341,11 @@ class PrestamoService
         // Calcular el interés completo del período (sin interesPeriodo() porque ese
         // método devuelve interes_pendiente cuando hay pago parcial del período actual,
         // lo que sería incorrecto para períodos futuros completamente impagos).
+        // Misma lógica de §5.3: < 200k siempre sobre monto original; >= 200k con recálculo.
         $mitad        = $prestamo->monto / 2;
-        $base         = $prestamo->saldo > $mitad ? $prestamo->monto : $mitad;
+        $base         = $prestamo->monto >= 200000
+            ? ($prestamo->saldo > $mitad ? $prestamo->monto : $mitad)
+            : $prestamo->monto;
         $montoInteres = (int) round($base * $this->tasa($prestamo));
 
         $proximo = $prestamo->proximo instanceof Carbon
