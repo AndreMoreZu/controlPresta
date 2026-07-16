@@ -40,7 +40,10 @@ class DashboardController extends Controller
         // Excluye atrasados para no duplicarlos con la sección 1.
         // interesPeriodo() no necesita interesesAtrasados cargados.
         $porCobrar = Prestamo::where('estado', 'activo')
-            ->whereBetween('proximo', [today(), today()->addDays(7)])
+            ->whereBetween('proximo', [
+                today()->startOfWeek(\Carbon\CarbonInterface::MONDAY),
+                today()->endOfWeek(\Carbon\CarbonInterface::SUNDAY),
+            ])
             ->whereHas('cliente', fn($q) => $q->where('estado', '!=', 'atrasado'))
             ->with('cliente')
             ->orderBy('proximo')
