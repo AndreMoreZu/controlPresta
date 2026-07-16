@@ -12,7 +12,7 @@ class PrestamoService
     // Una sola definición; nunca escribir estas tasas en otro lugar del código.
     private const TASAS = [
         'mensual'   => 0.20,
-        'quincenal' => 0.15,
+        'quincenal' => 0.10,
         'semanal'   => 0.05,
     ];
 

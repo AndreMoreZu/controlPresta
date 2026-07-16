@@ -75,7 +75,7 @@ Todos los usuarios tienen **acceso total** (mismas opciones y permisos). No hay 
 
 ### 5.2 Interés según frecuencia
 - **Mensual:** 20% del saldo
-- **Quincenal:** 15% del saldo
+- **Quincenal:** 10% del saldo
 - **Semanal:** 5% del saldo
 
 **Día de cobro:** lo acuerdan con cada cliente y se ingresa como fecha. Las fechas siguientes se calculan sumando el período (mensual +1 mes, quincenal +15 días, semanal +7 días / miércoles). Como referencia, lo típico es mensual/quincenal el 15 y el 30, y semanal los miércoles.
@@ -142,7 +142,7 @@ Reglas por concepto:
 El sistema es un **cuaderno ordenado con cálculos automáticos**, no un policía financiero. El dueño tiene control total sobre lo que cobra; el sistema sugiere, avisa, pero no bloquea.
 
 Los únicos cálculos automáticos son:
-- Interés según frecuencia (20 % mensual / 15 % quincenal / 5 % semanal), con recálculo único a la mitad del saldo.
+- Interés según frecuencia (20 % mensual / 10 % quincenal / 5 % semanal), con recálculo único a la mitad del saldo.
 - Conteo de días de atraso (`atraso_desde` → `dias_atraso`).
 - Multa por tramos según días de atraso.
 - Generación de intereses atrasados al superar un período completo sin pagar.
@@ -193,7 +193,7 @@ La multa y los intereses atrasados sí admiten pago parcial: lo que no se cobra 
 | cliente_id | foreignId → clientes | |
 | monto | unsignedInteger | monto original prestado (entero) |
 | saldo | unsignedInteger | deuda actual / capital (entero) |
-| frecuencia | enum('mensual','quincenal','semanal') | la tasa se deriva: 20/15/5 |
+| frecuencia | enum('mensual','quincenal','semanal') | la tasa se deriva: 20/10/5 |
 | interes_pagados | unsignedInteger default 0 | intereses que ya pagó (acumulado) |
 | multa_acumulada | unsignedInteger default 0 | multa actual (manual al migrar; si no, se calcula desde dias_atraso) |
 | dias_atraso | unsignedInteger default 0 | |
@@ -204,7 +204,7 @@ La multa y los intereses atrasados sí admiten pago parcial: lo que no se cobra 
 | timestamps | | |
 
 > **Derivados (NO se guardan, se calculan):**
-> - `tasa` = según frecuencia (mensual 0.20, quincenal 0.15, semanal 0.05).
+> - `tasa` = según frecuencia (mensual 0.20, quincenal 0.10, semanal 0.05).
 > - `abonado` = `monto - saldo` (lo que el cliente ha abonado a la deuda).
 > - `interes_periodo` = fórmula 5.3.
 

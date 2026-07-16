@@ -29,7 +29,7 @@
                 <div class="ctrl">
                     <select id="frecuencia" name="frecuencia" id="frec-select">
                         <option value="">— Elegí una —</option>
-                        @foreach (['mensual' => 'Mensual (20%)', 'quincenal' => 'Quincenal (15%)', 'semanal' => 'Semanal (5%)'] as $val => $lbl)
+                        @foreach (['mensual' => 'Mensual (20%)', 'quincenal' => 'Quincenal (10%)', 'semanal' => 'Semanal (5%)'] as $val => $lbl)
                             <option value="{{ $val }}" {{ old('frecuencia') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
                         @endforeach
                     </select>

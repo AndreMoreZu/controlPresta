@@ -77,13 +77,13 @@ class ClientesPruebaSeeder extends Seeder
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Quincenal (15%)
+    // Quincenal (10%)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Yorleny Vargas — Quincenal al día (paga los 15 y los 30).
      * proximo = próxima fecha 15 o 30 después de hoy → siempre >= hoy.
-     * interés = 150.000 × 15% = 22.500
+     * interés = 150.000 × 10% = 15.000
      */
     private function yorlenyVargas(PrestamoService $s, Carbon $hoy): void
     {

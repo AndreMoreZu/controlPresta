@@ -64,7 +64,7 @@
                         <label class="freq-opt {{ old('frecuencia', $prestamo?->frecuencia) === 'quincenal' ? 'on' : '' }}">
                             <input type="radio" name="frecuencia" value="quincenal"
                                    {{ old('frecuencia', $prestamo?->frecuencia) === 'quincenal' ? 'checked' : '' }}>
-                            <b>Quincenal</b><span>15%</span>
+                            <b>Quincenal</b><span>10%</span>
                         </label>
                         <label class="freq-opt {{ old('frecuencia', $prestamo?->frecuencia) === 'semanal' ? 'on' : '' }}">
                             <input type="radio" name="frecuencia" value="semanal"
