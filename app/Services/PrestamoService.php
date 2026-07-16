@@ -243,6 +243,7 @@ class PrestamoService
      *
      * Idempotente: correrlo N veces el mismo día produce el mismo resultado.
      * No paga nada ni avanza proximo — solo lleva la cuenta de lo vencido.
+     * Es SIMÉTRICO: tanto marca como desmarca el atraso según el estado real.
      *
      * Requiere: $prestamo->interesesAtrasados cargado (eager load) y $prestamo->cliente.
      */
@@ -251,11 +252,33 @@ class PrestamoService
         // Guard: nada que sincronizar si proximo no ha vencido y no hay deuda pendiente.
         // La comparación es ESTRICTA (lessThan): proximo = hoy significa "vence hoy",
         // no atrasado. La multa arranca el día SIGUIENTE al vencimiento.
-        $proxVencido  = $prestamo->proximo->lessThan(today());
-        $hayPendiente = $prestamo->interes_pendiente > 0
+        $proxVencido         = $prestamo->proximo->lessThan(today());
+        $interesesPendientes = $prestamo->interesesAtrasados->where('pagado', false);
+        $hayPendiente        = $prestamo->interes_pendiente > 0
             || $prestamo->multa_acumulada > 0
             || $prestamo->dias_atraso > 0
-            || $prestamo->interesesAtrasados->where('pagado', false)->isNotEmpty();
+            || $interesesPendientes->isNotEmpty();
+
+        // ── Camino de limpieza (simétrico al de marcar atraso) ───────────────
+        // Si el préstamo ya NO está vencido y no tiene intereses atrasados
+        // reales pendientes: limpiar todas las marcas de atraso y devolver el
+        // cliente a 'al-dia'. Esto resuelve estados zombie (ej. datos erróneos
+        // del bug de UTC, o multa_acumulada residual de ciclos anteriores).
+        if (!$proxVencido && $interesesPendientes->isEmpty() && !$prestamo->interes_pendiente) {
+            $limpieza = [];
+            if ((int) $prestamo->dias_atraso     !== 0)   $limpieza['dias_atraso']    = 0;
+            if ($prestamo->atraso_desde          !== null) $limpieza['atraso_desde']   = null;
+            if ($prestamo->vencido)                        $limpieza['vencido']        = false;
+            if ((int) $prestamo->multa_acumulada !== 0)    $limpieza['multa_acumulada'] = 0;
+            if ((int) $prestamo->multa_ya_pagada !== 0)    $limpieza['multa_ya_pagada'] = 0;
+            if ($limpieza) {
+                $prestamo->update($limpieza);
+            }
+            if ($prestamo->cliente->estado !== 'al-dia') {
+                $prestamo->cliente->update(['estado' => 'al-dia']);
+            }
+            return;
+        }
 
         if (!$proxVencido && !$hayPendiente) {
             return;
