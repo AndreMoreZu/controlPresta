@@ -83,19 +83,7 @@
                     <span class="gh-total">{{ colones($pago->monto_total) }}</span>
                 </div>
                 <div class="gh-split">
-                    @if ($pago->interes > 0)
-                        <span class="gh-int">Interés {{ colones($pago->interes) }}</span>
-                    @endif
-                    @if ($pago->abono > 0)
-                        <span>Abono {{ colones($pago->abono) }}</span>
-                    @endif
-                    @if ($pago->multa_pagada > 0)
-                        <span class="gh-multa">Multa {{ colones($pago->multa_pagada) }}</span>
-                    @endif
-                    @if ($pago->interes_atrasado_pagado > 0)
-                        <span class="gh-atr">Atr. {{ colones($pago->interes_atrasado_pagado) }}</span>
-                    @endif
-                    <span class="gh-metodo">{{ ucfirst($pago->metodo) }}</span>
+                    @include('pagos._desglose')
                 </div>
             </div>
         @empty

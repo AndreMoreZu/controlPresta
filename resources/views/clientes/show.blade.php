@@ -225,12 +225,15 @@
         </div>
 
         <div class="panel" style="margin-top: 16px;">
-            <h3>Historial de pagos<span class="sub">Cada pago muestra cuánto fue de interés y cuánto bajó la deuda</span></h3>
+            <h3>Historial de pagos<span class="sub">Interés, multa, intereses atrasados y abono por pago</span></h3>
             @forelse (($prestamo?->pagos ?? collect())->sortByDesc('fecha') as $pago)
                 <div class="hist-row">
                     <div class="h-l">
                         <b>{{ $pago->fecha->format('d/m/Y') }}</b>
-                        <span><span class="int">Interés {{ colones($pago->interes) }}</span> · Abono {{ colones($pago->abono) }} · {{ ucfirst($pago->metodo) }}</span>
+                        @if ($pago->es_saldo)
+                            <span class="tag tag-saldo" style="font-size:11px;vertical-align:middle;margin-left:4px;">Saldó cuenta</span>
+                        @endif
+                        <div class="gh-split" style="margin-top:3px;">@include('pagos._desglose')</div>
                     </div>
                     <div class="h-r">
                         <div class="h-amt">{{ colones($pago->monto_total) }}</div>
