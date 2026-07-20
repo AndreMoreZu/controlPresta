@@ -84,35 +84,18 @@ class PrestamoService
     }
 
     /**
-     * Multa neta que debe el cliente hoy (§5.5 + §5.9 Opción B).
+     * Multa total que debe el cliente (§5.5).
      *
-     * La multa_bruta se calcula de dos formas:
-     *   - multa_acumulada > 0: monto congelado (ingresado al migrar, o resto tras
-     *     un pago parcial con interés completo). No crece con el motor.
-     *   - multa_acumulada = 0: dinámica: dias_atraso × tarifa. Crece cada día.
-     *
-     * multa_ya_pagada es el crédito acumulado de pagos de multa en el ciclo
-     * de atraso actual. Se resta de la bruta para no cobrar dos veces lo ya pagado.
-     *
-     * Ejemplo: dia 6, bruta = ₡18.000, multa_ya_pagada = ₡10.000 → neta = ₡8.000.
+     * Siempre dinámica: dias_atraso × tarifa. Nunca se congela.
+     * dias_atraso ya excluye el día de cobro y el día de hoy (solo días completos).
      */
     public function multaAcumulada(Prestamo $prestamo): int
     {
-        // Calcular la multa bruta (congelada o dinámica)
-        if ($prestamo->multa_acumulada > 0) {
-            // Congelada: ingresada manualmente al migrar el préstamo,
-            // o resto de una multa tras pagar el interés completo.
-            $bruta = (int) $prestamo->multa_acumulada;
-        } elseif ($prestamo->dias_atraso > 0) {
-            // Dinámica: se acumula un día a la vez con el motor de atraso.
-            $bruta = $this->multaPorDia($prestamo->monto) * $prestamo->dias_atraso;
-        } else {
+        if ($prestamo->dias_atraso <= 0) {
             return 0;
         }
 
-        // Restar crédito acumulado de pagos parciales de multa.
-        // max(0, ...) evita valores negativos si hubo algún desajuste.
-        return max(0, $bruta - (int) $prestamo->multa_ya_pagada);
+        return $this->multaPorDia($prestamo->monto) * (int) $prestamo->dias_atraso;
     }
 
     // ── Intereses atrasados ───────────────────────────────────────────────────
@@ -157,13 +140,15 @@ class PrestamoService
     // ── Cálculo de días de atraso ─────────────────────────────────────────────
 
     /**
-     * Días de multa por atraso desde atraso_desde (§5.5).
+     * Días completos de atraso transcurridos desde atraso_desde (§5.5).
      *
-     * La multa arranca el día SIGUIENTE a la fecha de cobro vencida.
-     * diffInDays(atraso_desde, hoy) da exactamente ese conteo:
-     *   ej. cobro el 30 → hoy es el 5 del mes siguiente → 5 días.
+     * Solo cuentan días COMPLETOS ya terminados: el día de cobro (atraso_desde)
+     * y el día de HOY (en curso) no cuentan. Equivale a contar hasta ayer.
      *
-     * (Ver docblock en la versión anterior para la explicación del +1 implícito.)
+     * Ejemplos con atraso_desde = 15/07:
+     *   hoy 16/07 → 0  (el 16 aún está en curso)
+     *   hoy 17/07 → 1  (solo el 16 terminó)
+     *   hoy 20/07 → 4  (16, 17, 18, 19 terminados)
      */
     public function calcularDiasAtraso(string|Carbon $atrasoDesde): int
     {
@@ -171,7 +156,7 @@ class PrestamoService
             ? $atrasoDesde
             : Carbon::parse($atrasoDesde);
 
-        return max(0, $fecha->copy()->startOfDay()->diffInDays(now()->startOfDay()));
+        return max(0, $fecha->copy()->startOfDay()->diffInDays(today()->subDay()->startOfDay()));
     }
 
     // ── Operaciones de migración manual (§8 del README) ──────────────────────

@@ -102,16 +102,30 @@ interes = round(base * tasa)     // siempre entero
 - **Abono:** opcional. Si el cliente quiere, lo da y **sí** baja la deuda. Si no da abono, la deuda queda igual.
 - En el formulario de pago: el interés viene calculado (solo lectura) y el abono es un campo aparte que arranca en ₡0.
 
-### 5.5 Multa por atraso (se acumula por día)
+### 5.5 Multa por atraso (días completos ya transcurridos)
 ```
 monto <  100.000  → ₡2.000/día   (ej. 50k, 80k, 99k)
 monto de 100.000 a 149.999 → ₡3.000/día
 monto >= 150.000  → ₡5.000/día
-multa = tarifa * dias_atraso
+multa = tarifa × dias_atraso   (siempre recalculada, nunca congelada)
 ```
-**Cuándo empieza:** la multa arranca el **día siguiente** a la fecha de cobro (pasada la medianoche de ese día). El día de cobro NO cuenta como atraso.
-- Ejemplo: debía pagar el **30** y hoy es el **5** del mes siguiente → lleva **5 días** de multa (días 1, 2, 3, 4, 5).
-- Fórmula del conteo: `dias_atraso = días transcurridos desde (fecha_de_cobro + 1 día) hasta hoy`.
+**Qué cuenta y qué no:**
+- El día de cobro (`proximo`) **NO cuenta**.
+- El día de HOY (en curso) **NO cuenta** hasta que termine.
+- Solo cuentan los días **completamente transcurridos** entre el día siguiente al cobro y ayer (inclusive).
+
+**Fórmula:** `dias_atraso = diffInDays(fecha_de_cobro, ayer)`
+
+**Ejemplos** (se atrasó el miércoles 15):
+
+| Hoy | Días completos | dias_atraso | Multa (tarifa ₡5.000) |
+|-----|---------------|-------------|----------------------|
+| Jue 16 | — (el 16 aún no terminó) | 0 | ₡0 |
+| Vie 17 | 16 | 1 | ₡5.000 |
+| Sáb 18 | 16, 17 | 2 | ₡10.000 |
+| Lun 20 | 16, 17, 18, 19 | 4 | ₡20.000 |
+
+Como hoy ya está excluido, al cobrar no hay que hacer ningún ajuste adicional: la multa que se muestra es exactamente la que se cobra.
 
 La multa es un cobro aparte (no se suma a la deuda ni al interés). **Sigue creciendo cada día** que pase sin pagar, hasta que se registre el pago.
 

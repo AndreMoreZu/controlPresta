@@ -30,13 +30,12 @@ class PagoService
 
     public function registrarPago(Prestamo $prestamo, array $datos): Pago
     {
-        // ── 1. Refrescar dias_atraso desde atraso_desde ───────────────────────
+        // ── 1. Refrescar dias_atraso en memoria para el cálculo de multa ─────
+        // calcularDiasAtraso ya excluye el día de hoy (solo días completos),
+        // por lo que el valor a cobrar es exactamente el mostrado al operador.
+        // No se escribe en DB: Camino A lo zercea a 0 al cerrar el período.
         if ($prestamo->atraso_desde) {
-            $diasActuales = $this->prestamoService->calcularDiasAtraso($prestamo->atraso_desde);
-            if ($diasActuales !== $prestamo->dias_atraso) {
-                $prestamo->update(['dias_atraso' => $diasActuales]);
-                $prestamo->dias_atraso = $diasActuales;
-            }
+            $prestamo->dias_atraso = $this->prestamoService->calcularDiasAtraso($prestamo->atraso_desde);
         }
 
         // ── 2. Calcular lo que se debe de cada concepto ───────────────────────
@@ -89,14 +88,7 @@ class PagoService
 
     /**
      * proximo avanza, el ciclo de atraso termina.
-     *
-     * La multa se congela en lo que quedó sin pagar:
-     *   multaTotal = multa neta (multaAcumulada() ya descuenta multa_ya_pagada).
-     *   multa_restante = lo que debía − lo que pagó hoy.
-     *   multa_ya_pagada se resetea a 0 (listo para el próximo ciclo).
-     *
-     * Nota: interes_pendiente existe en la DB pero ya no se escribe aquí.
-     *   La columna se puede eliminar con una migración futura.
+     * multa_acumulada y dias_atraso quedan en 0; la multa es siempre dinámica (§5.5).
      */
     private function aplicarCaminoA(
         Prestamo $prestamo,
@@ -107,15 +99,13 @@ class PagoService
         int $interesPagado,
         ?string $proximoCobro = null,
     ): void {
-        $multaRestante = max(0, $multaTotal - $multaPagada);
-
         $nuevoProximo = $saldado ? $prestamo->proximo
             : ($proximoCobro ? Carbon::parse($proximoCobro) : $this->avanzarProximo($prestamo));
 
         $prestamo->update([
             'saldo'           => $nuevoSaldo,
             'interes_pagados' => $prestamo->interes_pagados + $interesPagado,
-            'multa_acumulada' => $multaRestante,
+            'multa_acumulada' => 0,
             'multa_ya_pagada' => 0,
             'dias_atraso'     => 0,
             'atraso_desde'    => null,
